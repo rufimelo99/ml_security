@@ -186,7 +186,6 @@ if __name__ == "__main__":
     accuracies = []
     examples = []
 
-    # Runs test for each epsilon.
     for eps in epsilons:
         acc, ex = test(model, device, test_loader, eps)
         accuracies.append(acc)
