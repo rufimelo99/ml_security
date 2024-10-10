@@ -7,3 +7,5 @@ black==24.8.0
 torch>=2.4.1
 einops>=0.8.0
 tqdm==4.66.5
+torchvision
+matplotlib
