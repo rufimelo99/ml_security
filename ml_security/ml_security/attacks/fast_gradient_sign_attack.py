@@ -10,10 +10,58 @@ This technique is widely used to test the robustness of models and study their v
 
 """
 
-import matplotlib.pyplot as plt
-import numpy as np
+from typing import List, Union
+
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from torchvision import datasets, transforms
+
+from ml_security.logger import logger
+
+
+def fgsm_attack(
+    image: torch.Tensor, epsilon: float, data_grad: torch.Tensor
+) -> torch.Tensor:
+    """
+    Fast Gradient Sign Method.
+
+    Args:
+        image (torch.Tensor): The original input image.
+        epsilon (float): The epsilon value to use for the attack. Corresponds to the magnitude of the perturbation.
+        data_grad (torch.Tensor): The gradient of the loss with respect to the input.
+
+    Returns:
+        torch.Tensor: The perturbed image.
+    """
+    # Collects the element-wise sign of the data gradient.
+    data_grad_sign = data_grad.sign()
+
+    # Creates the perturbed image by adjusting each pixel of the input image.
+    perturbed_image = image + epsilon * data_grad_sign
+
+    # Adds clipping to maintain [0,1] range.
+    perturbed_image = torch.clamp(perturbed_image, 0, 1)
+
+    return perturbed_image
+
+
+def denorm(
+    batch: Union[torch.Tensor, List[torch.Tensor]],
+    mean: Union[torch.Tensor, List[float]],
+    std: Union[torch.Tensor, List[float]],
+) -> torch.Tensor:
+    """
+    Convert a batch of tensors to their original scale.
+
+    Args:
+        batch (Union[torch.Tensor, List[torch.Tensor]]): Batch of normalized tensors.
+        mean (Union[torch.Tensor, List[float]]): Mean used for normalization.
+        std (Union[torch.Tensor, List[float]]): Standard deviation used for normalization.
+
+    Returns:
+        torch.Tensor: batch of tensors without normalization applied to them.
+    """
+    if isinstance(mean, list):
+        logger.error("Mean is a list. Should be a tensor.")
+    if isinstance(std, list):
+        logger.error("Standard deviation is a list. Should be a tensor.")
+
+    return batch * std.view(1, -1, 1, 1) + mean.view(1, -1, 1, 1)
