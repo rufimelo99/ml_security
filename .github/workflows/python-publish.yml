@@ -28,19 +28,16 @@ jobs:
         python-version: '3.x'
     - name: Install dependencies
       run: |
-        cd ml_security
         python -m pip install --upgrade pip
-        pip install build
+        pip install setuptools wheel twine
     - name: Build package
       run: |
         cd ml_security
         python -m build
-
-    - name: Change directory to ml_security
-      run: cd ml_security
-
     - name: Publish package
-      uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
+      env:
+        TOKEN: ${{secrets.PYPI_API_TOKEN}}
+      run: |
+        cd ml_security
+        python setup.py sdist bdist_wheel
+        twine upload dist/* -u __token__ -p $TOKEN
