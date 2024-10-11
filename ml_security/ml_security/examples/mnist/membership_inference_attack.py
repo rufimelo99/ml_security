@@ -24,6 +24,8 @@ class AttackModel(nn.Module):
         self.fc2 = nn.Linear(64, 1)
 
     def forward(self, x):
+        if x.dim() == 1:
+            x = x.unsqueeze(1)
         x = F.relu(self.fc1(x))
         x = torch.sigmoid(self.fc2(x))
         return x
@@ -92,7 +94,7 @@ if __name__ == "__main__":
     attack_dataset = TensorDataset(
         torch.Tensor(attack_data), torch.Tensor(attack_labels)
     )
-    attack_loader = DataLoader(attack_dataset, batch_size=1, shuffle=True)
+    attack_loader = DataLoader(attack_dataset, batch_size=4, shuffle=True)
 
     # Initialize the attack model.
     attack_model = AttackModel().to(device)
@@ -107,7 +109,7 @@ if __name__ == "__main__":
             data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
             output = attack_model(data)
-            loss = criterion(output, target)
+            loss = criterion(output, target.unsqueeze(1))
             loss.backward()
             optimizer.step()
 
