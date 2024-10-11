@@ -3,10 +3,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
 from torchvision import transforms
 from tqdm import tqdm
 
+from ml_security.attacks.membership_inference_attack import create_attack_dataloader
 from ml_security.datasets.computer_vision import DatasetType, create_dataloader
 from ml_security.examples.mnist.model import Net
 from ml_security.logger import logger
@@ -29,17 +29,6 @@ class AttackModel(nn.Module):
         x = F.relu(self.fc1(x))
         x = torch.sigmoid(self.fc2(x))
         return x
-
-
-# Function to collect model predictions (confidence scores).
-def get_confidence_scores(model, data_loader):
-    confidence_scores = []
-    with torch.no_grad():
-        for data, target in tqdm(data_loader):
-            data, target = data.to(device), target.to(device)
-            output = model(data)
-            confidence_scores.append(F.softmax(output, dim=1)[:, 1].cpu().numpy())
-    return np.concatenate(confidence_scores)
 
 
 if __name__ == "__main__":
@@ -76,25 +65,12 @@ if __name__ == "__main__":
         split_ratio=[80, 20],
     )
 
-    # Gets confidence scores for both train and holdout sets
-    train_confidence_scores = get_confidence_scores(model, train_loader)
-    holdout_confidence_scores = get_confidence_scores(model, holdout_loader)
-
-    # Label the samples: 1 for training data, 0 for holdout data
-    train_labels = np.ones(len(train_confidence_scores))
-    holdout_labels = np.zeros(len(holdout_confidence_scores))
-
-    # Creates the dataset for the attack model.
-    attack_data = np.concatenate(
-        (train_confidence_scores, holdout_confidence_scores), axis=0
+    attack_loader, attack_labels = create_attack_dataloader(
+        train_loader=train_loader,
+        holdout_loader=holdout_loader,
+        model=model,
+        device=device,
     )
-    attack_labels = np.concatenate((train_labels, holdout_labels), axis=0)
-
-    # Prepares data for the attack model.
-    attack_dataset = TensorDataset(
-        torch.Tensor(attack_data), torch.Tensor(attack_labels)
-    )
-    attack_loader = DataLoader(attack_dataset, batch_size=4, shuffle=True)
 
     # Initialize the attack model.
     attack_model = AttackModel().to(device)
