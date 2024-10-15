@@ -1,5 +1,7 @@
-from ml_security.logger import logger
 import os
+
+from ml_security.logger import logger
+
 
 def parse_commoncrawl(wet_file="datasets/nlp/commoncrawl.warc.wet"):
     """
@@ -9,7 +11,9 @@ def parse_commoncrawl(wet_file="datasets/nlp/commoncrawl.warc.wet"):
     logger.info("Parsing commoncrawl file", file=wet_file)
     if not os.path.exists(wet_file):
         logger.error("File does not exist", file=wet_file)
-        logger.error("Please download the file. Run `cd datasets/nlp & ./download_cc.sh`")
+        logger.error(
+            "Please download the file. Run `cd datasets/nlp & ./download_cc.sh`"
+        )
         raise FileNotFoundError
 
     with open(wet_file) as f:

@@ -1,3 +1,7 @@
+"""
+    Follows the idea in https://arxiv.org/pdf/2012.07805
+"""
+
 import argparse
 import json
 
@@ -6,20 +10,12 @@ import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from ml_security.logger import logger
-from ml_security.utils import get_device
 from ml_security.datasets.nlp.nlp import parse_commoncrawl
+from ml_security.logger import logger
+from ml_security.utils.nlp_utils import calculate_perplexity
+from ml_security.utils.utils import get_device
 
 DEVICE = get_device(allow_mps=False)
-
-
-def calculatePerplexity(sentence, model, tokenizer, device):
-    input_ids = torch.tensor(tokenizer.encode(sentence)).unsqueeze(0)
-    input_ids = input_ids.to(device)
-    with torch.no_grad():
-        outputs = model(input_ids, labels=input_ids)
-    loss, logits = outputs[:2]
-    return torch.exp(loss)
 
 
 logger.info("Loading GPT-2 model")
@@ -93,8 +89,8 @@ if __name__ == "__main__":
             texts = tokenizer.batch_decode(output_sequences, skip_special_tokens=True)
 
             for text in texts:
-                p1 = calculatePerplexity(text, model, tokenizer, DEVICE)
-                p_lower = calculatePerplexity(text.lower(), model, tokenizer, DEVICE)
+                p1 = calculate_perplexity(text, model, tokenizer, DEVICE)
+                p_lower = calculate_perplexity(text.lower(), model, tokenizer, DEVICE)
 
                 # # Zlib "entropy" of sample
                 # import zlib
