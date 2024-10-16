@@ -1,24 +1,42 @@
+"""
+    Inspired by https://github.com/nyu-dl/bert-gen/blob/master/bert-babble.ipynb.
+
+
+Check https://arxiv.org/abs/1902.04094 for more details. 
+@article{wang2019bert,
+  title={BERT has a Mouth, and It Must Speak: BERT as a Markov Random Field Language Model},
+  author={Wang, Alex and Cho, Kyunghyun},
+  journal={arXiv preprint arXiv:1902.04094},
+  year={2019}
+}
+"""
+
 import argparse
 import math
-import time
 
 import numpy as np
 import torch
+from datasets import load_dataset
+from tqdm import tqdm
 from transformers import AutoModelForMaskedLM, AutoTokenizer
+
+from ml_security.utils.utils import get_device
 
 
 def tokenize_batch(batch):
+    """Tokenizes a batch of text"""
     return [tokenizer.convert_tokens_to_ids(sent) for sent in batch]
 
 
 def untokenize_batch(batch):
+    """Untokenizes a batch of text"""
     return [tokenizer.convert_ids_to_tokens(sent) for sent in batch]
 
 
 def detokenize(sent):
     """Roughly detokenizes (mainly undoes wordpiece)"""
     new_sent = []
-    for i, tok in enumerate(sent):
+    for _, tok in enumerate(sent):
         if tok.startswith("##"):
             new_sent[len(new_sent) - 1] = new_sent[len(new_sent) - 1] + tok[2:]
         else:
@@ -51,16 +69,10 @@ def generate_step(
         idx = torch.argmax(logits, dim=-1)
     return idx.tolist() if return_list else idx
 
-    # Generation modes as functions
 
-
-def get_init_text(seed_text, max_len, batch_size=1, rand_init=False):
+def get_init_text(seed_text, max_len, batch_size=1):
     """Get initial sentence by padding seed_text with either masks or random words to max_len"""
     batch = [seed_text + [MASK] * max_len + [SEP] for _ in range(batch_size)]
-    # if rand_init:
-    #    for ii in range(max_len):
-    #        init_idx[seed_len+ii] = np.random.randint(0, len(tokenizer.vocab))
-
     return tokenize_batch(batch)
 
 
@@ -77,7 +89,7 @@ def parallel_sequential_generation(
     verbose=True,
     batch_size=2,
 ):
-    """Generate for one random position at a timestep
+    """Generates for one random position at a timestep
 
     args:
         - burnin: during burn-in period, sample from full distribution; afterwards take argmax
@@ -109,43 +121,6 @@ def parallel_sequential_generation(
                 + ["(*)"]
                 + for_print[seed_len + kk + 1 :]
             )
-            print("iter", ii + 1, " ".join(for_print))
-
-    return untokenize_batch(batch)
-
-
-def parallel_generation(
-    seed_text,
-    max_len=15,
-    top_k=0,
-    temperature=None,
-    max_iter=300,
-    sample=True,
-    cuda=False,
-    print_every=10,
-    verbose=True,
-    batch_size=2,
-):
-    """Generate for all positions at a time step"""
-    seed_len = len(seed_text)
-    batch = get_init_text(seed_text, max_len, batch_size)
-
-    for ii in range(max_iter):
-        inp = torch.tensor(batch).cuda() if cuda else torch.tensor(batch)
-        out = model(inp)
-        for kk in range(max_len):
-            idxs = generate_step(
-                out,
-                gen_idx=seed_len + kk,
-                top_k=top_k,
-                temperature=temperature,
-                sample=sample,
-            )
-            for jj in range(batch_size):
-                batch[jj][seed_len + kk] = idxs[jj]
-
-        if verbose and np.mod(ii, print_every) == 0:
-            print("iter", ii + 1, " ".join(tokenizer.convert_ids_to_tokens(batch[0])))
 
     return untokenize_batch(batch)
 
@@ -198,11 +173,9 @@ def generate(
     cuda=False,
     print_every=1,
 ):
-    # main generation function to call
     sentences = []
     n_batches = math.ceil(n_samples / batch_size)
-    start_time = time.time()
-    for batch_n in range(n_batches):
+    for _ in range(n_batches):
         batch = parallel_sequential_generation(
             seed_text,
             max_len=max_len,
@@ -216,40 +189,16 @@ def generate(
         )
 
         # batch = sequential_generation(seed_text, batch_size=20, max_len=max_len, top_k=top_k, temperature=temperature, leed_out_len=leed_out_len, sample=sample)
-        # batch = parallel_generation(seed_text, max_len=max_len, top_k=top_k, temperature=temperature, sample=sample, max_iter=max_iter)
-
-        if (batch_n + 1) % print_every == 0:
-            print(
-                "Finished batch %d in %.3fs" % (batch_n + 1, time.time() - start_time)
-            )
-            start_time = time.time()
-
         sentences += batch
     return sentences
 
 
 # Utility functions
-def printer(sent, should_detokenize=True):
-    if should_detokenize:
-        sent = detokenize(sent)[1:-1]
-    print(" ".join(sent))
-
-
-def read_sents(in_file, should_detokenize=False):
-    sents = [sent.strip().split() for sent in open(in_file).readlines()]
-    if should_detokenize:
-        sents = [detokenize(sent) for sent in sents]
-    return sents
-
-
 def write_sents(out_file, sents, should_detokenize=False):
     with open(out_file, "w") as out_fh:
         for sent in sents:
             sent = detokenize(sent[1:-1]) if should_detokenize else sent
             out_fh.write("%s\n" % " ".join(sent))
-
-
-###
 
 
 def score(sentence, model, tokenizer):
@@ -265,8 +214,6 @@ def score(sentence, model, tokenizer):
         loss = model(masked_input, labels=labels).loss
     return np.exp(loss.item())
 
-
-####
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -307,17 +254,18 @@ if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained("google-bert/bert-base-uncased")
     model = AutoModelForMaskedLM.from_pretrained("google-bert/bert-base-uncased")
 
-    from datasets import load_dataset
+    DEVICE = get_device()
+    model.to(DEVICE)
 
     ds_book_corpus = load_dataset("bookcorpus/bookcorpus", trust_remote_code=True)
     bert_sents = []
-    for n_sample in range(n_samples):
+    for n_sample in tqdm(range(n_samples)):
         random_entry = ds_book_corpus["train"][
             np.random.randint(len(ds_book_corpus["train"]))
         ]["text"]
-        # use the tokenizer and grab the first 5 tokens from the entry
         tokens = tokenizer.tokenize(random_entry)[:5]
-        tokens_str = "[CLS] " + " ".join(tokens)
+        tokens_str = "[CLS]".split()
+        tokens_str.extend(tokens)
 
         for temp in [temperature]:
             bert_sents += generate(
@@ -332,7 +280,7 @@ if __name__ == "__main__":
                 temperature=temp,
                 burnin=burnin,
                 max_iter=max_iter,
-                cuda=False,
+                cuda=True if DEVICE == torch.device("cuda") else False,
             )
     out_file = "%s-len%d-burnin%d-topk%d-temp%.3f.txt" % (
         model_version,
