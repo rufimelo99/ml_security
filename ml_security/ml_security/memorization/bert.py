@@ -258,6 +258,7 @@ if __name__ == "__main__":
     model.to(DEVICE)
 
     ds_book_corpus = load_dataset("bookcorpus/bookcorpus", trust_remote_code=True)
+    entry_idxs = []
     bert_sents = []
     for n_sample in tqdm(range(n_samples)):
         random_entry = ds_book_corpus["train"][
@@ -282,6 +283,7 @@ if __name__ == "__main__":
                 max_iter=max_iter,
                 cuda=True if DEVICE == torch.device("cuda") else False,
             )
+            entry_idxs.append(random_entry)
     out_file = "%s-len%d-burnin%d-topk%d-temp%.3f.txt" % (
         model_version,
         max_len,
@@ -290,3 +292,6 @@ if __name__ == "__main__":
         temp,
     )
     write_sents(out_file, bert_sents, should_detokenize=True)
+    with open(out_file.replace(".txt", "-idxs.txt"), "w") as out_fh:
+        for idx in entry_idxs:
+            out_fh.write("%s\n" % idx)
