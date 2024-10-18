@@ -261,8 +261,9 @@ if __name__ == "__main__":
     entry_idxs = []
     bert_sents = []
     for n_sample in tqdm(range(n_samples)):
+        random_idx = np.random.randint(len(ds_book_corpus["train"]))
         random_entry = ds_book_corpus["train"][
-            np.random.randint(len(ds_book_corpus["train"]))
+            random_idx
         ]["text"]
         tokens = tokenizer.tokenize(random_entry)[:5]
         tokens_str = "[CLS]".split()
@@ -283,7 +284,7 @@ if __name__ == "__main__":
                 max_iter=max_iter,
                 cuda=True if DEVICE == torch.device("cuda") else False,
             )
-            entry_idxs.append(random_entry)
+            entry_idxs.append(random_idx)
     out_file = "%s-len%d-burnin%d-topk%d-temp%.3f.txt" % (
         model_version,
         max_len,
