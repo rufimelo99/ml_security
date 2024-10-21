@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from tqdm import tqdm
 
-from ml_security.adaptative_linear_network.network import HybridLinearKAN
+from ml_security.adaptative_network.network import HybridLinearKAN
 from ml_security.datasets.computer_vision import (
     NUM_CLASSES,
     DatasetType,
