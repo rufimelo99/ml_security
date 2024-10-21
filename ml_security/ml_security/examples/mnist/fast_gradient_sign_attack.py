@@ -152,7 +152,7 @@ def plot_accuracy(epsilons, accuracies):
 
 if __name__ == "__main__":
     epsilons = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
-    pretrained_model = "examples/mnist/mnist_cnn.pt"
+    pretrained_model = "ml_security/examples/mnist/mnist_cnn.pt"
     transformation = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
     )

@@ -37,6 +37,8 @@ def detokenize(sent):
     """Roughly detokenizes (mainly undoes wordpiece)"""
     new_sent = []
     for _, tok in enumerate(sent):
+        if not tok:
+            continue
         if tok.startswith("##"):
             new_sent[len(new_sent) - 1] = new_sent[len(new_sent) - 1] + tok[2:]
         else:
@@ -251,20 +253,21 @@ if __name__ == "__main__":
     sep_id = tokenizer.convert_tokens_to_ids([SEP])[0]
     cls_id = tokenizer.convert_tokens_to_ids([CLS])[0]
 
-    tokenizer = AutoTokenizer.from_pretrained("google-bert/bert-base-uncased")
-    model = AutoModelForMaskedLM.from_pretrained("google-bert/bert-base-uncased")
-
-    DEVICE = get_device()
+    tokenizer = AutoTokenizer.from_pretrained(model_version)
+    model = AutoModelForMaskedLM.from_pretrained(model_version)
+    DEVICE = get_device(allow_mps=False)
     model.to(DEVICE)
 
-    ds_book_corpus = load_dataset("bookcorpus/bookcorpus", trust_remote_code=True)
+    ds_book_corpus = load_dataset("bookcorpus/bookcorpus", trust_remote_code=True)[
+        "train"
+    ]
+    ds_book_corpus = ds_book_corpus.select(range(4))
     entry_idxs = []
     bert_sents = []
     for n_sample in tqdm(range(n_samples)):
-        random_idx = np.random.randint(len(ds_book_corpus["train"]))
-        random_entry = ds_book_corpus["train"][
-            random_idx
-        ]["text"]
+        random_idx = np.random.randint(len(ds_book_corpus))
+        random_entry = ds_book_corpus[random_idx]["text"]
+        print(random_entry)
         tokens = tokenizer.tokenize(random_entry)[:5]
         tokens_str = "[CLS]".split()
         tokens_str.extend(tokens)

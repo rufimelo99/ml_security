@@ -196,7 +196,7 @@ def main():
         scheduler.step()
 
     if args.save_model:
-        torch.save(model.state_dict(), "examples/mnist/mnist_cnn.pt")
+        torch.save(model.state_dict(), "ml_security/examples/mnist/mnist_cnn.pt")
 
 
 if __name__ == "__main__":
