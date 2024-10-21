@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Callable, Union
 
 import numpy as np
 import torch
@@ -36,6 +36,9 @@ def create_attack_dataloader(
     holdout_loader: DataLoader,
     model: nn.Module,
     device: torch.device,
+    get_confidence_scores: Callable[
+        [torch.nn.Module, DataLoader, torch.device], np.ndarray
+    ] = get_confidence_scores,
 ) -> Union[DataLoader, np.ndarray]:
     """
     Create the DataLoader for the attack model.

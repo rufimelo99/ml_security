@@ -11,3 +11,4 @@ torchvision
 matplotlib
 scikit-learn
 datasets
+pre-commit
