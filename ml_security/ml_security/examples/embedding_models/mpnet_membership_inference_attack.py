@@ -52,6 +52,7 @@ def create_dataset_from_ms_marco(ms_marco, split="train"):
 tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-mpnet-base-v2")
 model = AutoModel.from_pretrained("sentence-transformers/all-mpnet-base-v2")
 ms_marco = load_dataset("microsoft/ms_marco", "v1.1")
+model.to(DEVICE)
 
 
 train_passages = create_dataset_from_ms_marco(ms_marco, split="train")
@@ -73,6 +74,8 @@ def get_confidence_scores(model, dataloader, device):
         encoded_input = tokenizer(
             batch, padding=True, truncation=True, return_tensors="pt"
         )
+        # Move input to device
+        encoded_input = {k: v.to(device) for k, v in encoded_input.items()}
 
         # Compute token embeddings
         with torch.no_grad():
@@ -95,7 +98,7 @@ attack_dataloader, attack_labels = create_attack_dataloader(
     train_dataloader,
     holdout_dataloader,
     model,
-    device="cpu",
+    device=DEVICE,
     get_confidence_scores=get_confidence_scores,
 )
 
