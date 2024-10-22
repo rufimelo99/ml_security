@@ -1,5 +1,9 @@
+import argparse
+import json
 import math
+import os
 
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -16,7 +20,6 @@ from ml_security.logger import logger
 from ml_security.utils import get_device, set_seed
 
 set_seed(42)
-EPOCHS = 1
 DEVICE = get_device()
 
 INPUT_SIZE = 28 * 28
@@ -347,6 +350,9 @@ class KAN(torch.nn.Module):
         )
 
 
+##############################################
+
+
 def classic_training(
     trainloader,
     valloader,
@@ -357,9 +363,16 @@ def classic_training(
     epochs,
     device,
 ):
+    train_losses = []
+    train_accuracies = []
+    val_losses = []
+    val_accuracies = []
+
     model.to(device)
     for epoch in tqdm(range(epochs)):
         model.train()
+        total_loss = 0
+        total_accuracy = 0
         with tqdm(trainloader) as pbar:
             for i, (images, labels) in enumerate(pbar):
                 if images.shape[1] == 3:
@@ -377,6 +390,11 @@ def classic_training(
                     accuracy=accuracy.item(),
                     lr=optimizer.param_groups[0]["lr"],
                 )
+                total_loss += loss.item()
+                total_accuracy += accuracy.item()
+
+        train_losses.append(total_loss / len(trainloader))
+        train_accuracies.append(total_accuracy / len(trainloader))
 
         model.eval()
         val_loss = 0
@@ -392,23 +410,156 @@ def classic_training(
                 val_accuracy += (
                     (output.argmax(dim=1) == labels.to(device)).float().mean().item()
                 )
+
         val_loss /= len(valloader)
         val_accuracy /= len(valloader)
-
+        val_losses.append(val_loss)
+        val_accuracies.append(val_accuracy)
         scheduler.step()
 
-        logger.info(
-            "Finished epoch.",
-            epoch=epoch + 1,
-            val_loss=val_loss,
-            val_accuracy=val_accuracy,
-        )
+    logger.info(
+        "Finished epoch.",
+        epoch=epoch + 1,
+        val_loss=val_loss,
+        val_accuracy=val_accuracy,
+    )
 
-        return model
+    return model, train_losses, train_accuracies, val_losses, val_accuracies
+
+
+def plot_results(
+    train_losses,
+    train_accuracies,
+    val_losses,
+    val_accuracies,
+    linear_train_losses,
+    linear_train_accuracies,
+    linear_val_losses,
+    linear_val_accuracies,
+    hybrid_train_losses,
+    hybrid_train_accuracies,
+    hybrid_val_losses,
+    hybrid_val_accuracies,
+    directory,
+):
+    fig, ax = plt.subplots(2, 1, figsize=(10, 10))
+
+    # Define colors for each model
+    colors = {"KAN": "blue", "Linear": "green", "Hybrid": "red"}
+
+    # Plot losses
+    ax[0].plot(train_losses, label="KAN train loss", color=colors["KAN"], linestyle="-")
+    ax[0].plot(val_losses, label="KAN val loss", color=colors["KAN"], linestyle="--")
+    ax[0].plot(
+        linear_train_losses,
+        label="Linear train loss",
+        color=colors["Linear"],
+        linestyle="-",
+    )
+    ax[0].plot(
+        linear_val_losses,
+        label="Linear val loss",
+        color=colors["Linear"],
+        linestyle="--",
+    )
+    ax[0].plot(
+        hybrid_train_losses,
+        label="Hybrid train loss",
+        color=colors["Hybrid"],
+        linestyle="-",
+    )
+    ax[0].plot(
+        hybrid_val_losses,
+        label="Hybrid val loss",
+        color=colors["Hybrid"],
+        linestyle="--",
+    )
+    ax[0].set_xlabel("Epoch")
+    ax[0].set_ylabel("Loss")
+    ax[0].legend()
+
+    # Plot accuracies
+    ax[1].plot(
+        train_accuracies, label="KAN train accuracy", color=colors["KAN"], linestyle="-"
+    )
+    ax[1].plot(
+        val_accuracies, label="KAN val accuracy", color=colors["KAN"], linestyle="--"
+    )
+    ax[1].plot(
+        linear_train_accuracies,
+        label="Linear train accuracy",
+        color=colors["Linear"],
+        linestyle="-",
+    )
+    ax[1].plot(
+        linear_val_accuracies,
+        label="Linear val accuracy",
+        color=colors["Linear"],
+        linestyle="--",
+    )
+    ax[1].plot(
+        hybrid_train_accuracies,
+        label="Hybrid train accuracy",
+        color=colors["Hybrid"],
+        linestyle="-",
+    )
+    ax[1].plot(
+        hybrid_val_accuracies,
+        label="Hybrid val accuracy",
+        color=colors["Hybrid"],
+        linestyle="--",
+    )
+    ax[1].set_xlabel("Epoch")
+    ax[1].set_ylabel("Accuracy")
+    ax[1].legend()
+
+    fig.savefig(directory + "results.png")
+
+
+def save_results(
+    train_losses,
+    train_accuracies,
+    val_losses,
+    val_accuracies,
+    linear_train_losses,
+    linear_train_accuracies,
+    linear_val_losses,
+    linear_val_accuracies,
+    hybrid_train_losses,
+    hybrid_train_accuracies,
+    hybrid_val_losses,
+    hybrid_val_accuracies,
+    directory,
+):
+    results = {
+        "train_losses": train_losses,
+        "train_accuracies": train_accuracies,
+        "val_losses": val_losses,
+        "val_accuracies": val_accuracies,
+        "linear_train_losses": linear_train_losses,
+        "linear_train_accuracies": linear_train_accuracies,
+        "linear_val_losses": linear_val_losses,
+        "linear_val_accuracies": linear_val_accuracies,
+        "hybrid_train_losses": hybrid_train_losses,
+        "hybrid_train_accuracies": hybrid_train_accuracies,
+        "hybrid_val_losses": hybrid_val_losses,
+        "hybrid_val_accuracies": hybrid_val_accuracies,
+    }
+    with open(directory + "results.json", "w") as f:
+        json.dump(results, f)
 
 
 if __name__ == "__main__":
-    dataset = DatasetType.CIFAR10
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--dataset", type=str, default="MNIST", choices=["MNIST", "CIFAR10"]
+    )
+    parser.add_argument("--epochs", type=int, default=5)
+    args = parser.parse_args()
+
+    dataset = DatasetType[args.dataset]
+    epochs = args.epochs
+
     trainloader = create_dataloader(dataset=dataset, batch_size=64, train=True)
     valloader = create_dataloader(dataset=dataset, batch_size=64, train=False)
 
@@ -419,15 +570,17 @@ if __name__ == "__main__":
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.8)
     criterion = nn.CrossEntropyLoss()
 
-    model = classic_training(
-        trainloader,
-        valloader,
-        model,
-        optimizer,
-        criterion,
-        scheduler,
-        EPOCHS,
-        DEVICE,
+    (model, train_losses, train_accuracies, val_losses, val_accuracies) = (
+        classic_training(
+            trainloader,
+            valloader,
+            model,
+            optimizer,
+            criterion,
+            scheduler,
+            epochs,
+            DEVICE,
+        )
     )
 
     linear_model = LinearNet(num_classes=NUM_CLASSES[dataset])
@@ -436,14 +589,20 @@ if __name__ == "__main__":
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.8)
     criterion = nn.CrossEntropyLoss()
 
-    linear_model = classic_training(
+    (
+        linear_model,
+        linear_train_losses,
+        linear_train_accuracies,
+        linear_val_losses,
+        linear_val_accuracies,
+    ) = classic_training(
         trainloader,
         valloader,
         linear_model,
         optimizer,
         criterion,
         scheduler,
-        EPOCHS,
+        epochs,
         DEVICE,
     )
 
@@ -453,19 +612,64 @@ if __name__ == "__main__":
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.8)
     criterion = nn.CrossEntropyLoss()
 
-    hybrid_model = classic_training(
+    (
+        hybrid_model,
+        hybrid_train_losses,
+        hybrid_train_accuracies,
+        hybrid_val_losses,
+        hybrid_val_accuracies,
+    ) = classic_training(
         trainloader,
         valloader,
         hybrid_model,
         optimizer,
         criterion,
         scheduler,
-        EPOCHS,
+        epochs,
         DEVICE,
     )
 
     # Save models
     directory = "ml_security/adaptative_network/eval/"
-    torch.save(model.state_dict(), directory + "kan.pth")
-    torch.save(linear_model.state_dict(), directory + "linear.pth")
-    torch.save(hybrid_model.state_dict(), directory + "hybrid.pth")
+
+    # Create repo for experience dataset
+    dataset_dir = directory + args.dataset + "/"
+    if not os.path.exists(dataset_dir):
+        os.makedirs(dataset_dir)
+
+    torch.save(model.state_dict(), dataset_dir + "kan.pth")
+    torch.save(linear_model.state_dict(), dataset_dir + "linear.pth")
+    torch.save(hybrid_model.state_dict(), dataset_dir + "hybrid.pth")
+
+    # Plot results
+    plot_results(
+        train_losses,
+        train_accuracies,
+        val_losses,
+        val_accuracies,
+        linear_train_losses,
+        linear_train_accuracies,
+        linear_val_losses,
+        linear_val_accuracies,
+        hybrid_train_losses,
+        hybrid_train_accuracies,
+        hybrid_val_losses,
+        hybrid_val_accuracies,
+        dataset_dir,
+    )
+
+    save_results(
+        train_losses,
+        train_accuracies,
+        val_losses,
+        val_accuracies,
+        linear_train_losses,
+        linear_train_accuracies,
+        linear_val_losses,
+        linear_val_accuracies,
+        hybrid_train_losses,
+        hybrid_train_accuracies,
+        hybrid_val_losses,
+        hybrid_val_accuracies,
+        dataset_dir,
+    )
