@@ -45,7 +45,6 @@ class HybridLinearKAN(torch.nn.Module):
         scale_noise (float): Scale of the noise added to the spline weights.
         scale_base (float): Scale of the base weight initialization.
         scale_spline (float): Scale of the spline weight initialization.
-        enable_standalone_scale_spline (bool): Whether to enable the standalone scale of the spline weights.
         base_activation (torch.nn.Module): Base activation function.
         grid_eps (float): Grid epsilon.
         grid_range (list): Grid range.
@@ -63,7 +62,6 @@ class HybridLinearKAN(torch.nn.Module):
         scale_noise (float): Scale of the noise added to the spline weights.
         scale_base (float): Scale of the base weight initialization.
         scale_spline (float): Scale of the spline weight initialization.
-        enable_standalone_scale_spline (bool): Whether to enable the standalone scale of the spline weights.
         base_activation (torch.nn.Module): Base activation function.
         grid_eps (float): Grid epsilon.
     """
@@ -74,10 +72,10 @@ class HybridLinearKAN(torch.nn.Module):
         out_features,
         grid_size=5,
         spline_order=3,
-        scale_noise=0.1,
+        scale_noise=0.01,
         scale_base=1.0,
         scale_spline=1.0,
-        base_activation=torch.nn.SiLU,
+        base_activation=torch.nn.LeakyReLU,
         grid_eps=0.02,
         grid_range=[-1, 1],
     ):
@@ -218,8 +216,6 @@ class HybridLinearKAN(torch.nn.Module):
             self._b_splines(x).view(x.size(0), -1),
             self.scaled_spline_weight.view(self.out_features, -1),
         )
-
-        output = torch.matmul(self.linear_weight, spline_output.T).T
-
+        output = F.linear(spline_output, self.linear_weight.T)
         output = output.reshape(*original_shape[:-1], self.out_features)
         return output

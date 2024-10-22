@@ -13,10 +13,11 @@ from ml_security.adaptative_network.eval.utils import (
     plot_results,
     save_results,
 )
-from ml_security.datasets.computer_vision import (
+from ml_security.datasets.tabular_UCI import (
     NUM_CLASSES,
-    DatasetType,
-    create_dataloader,
+    UCI_DATASET,
+    from_uciml_to_dataset,
+    INPUT_FEATURES,
 )
 from ml_security.logger import logger
 from ml_security.utils import get_device, set_seed
@@ -24,12 +25,9 @@ from ml_security.utils import get_device, set_seed
 set_seed(42)
 DEVICE = get_device()
 
-INPUT_SIZE = 28 * 28
-HIDDEN_SIZE = 100
+
+HIDDEN_SIZE = 16
 LR = 1e-3
-
-
-##############################################
 
 
 if __name__ == "__main__":
@@ -37,20 +35,26 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dataset",
         type=str,
-        default="MNIST",
-        choices=["MNIST", "CIFAR10", "FASHION_MNIST"],
+        default="IRIS",
+        choices=["IRIS", "WINE", "BREAST_CANCER", "HEART_DISEASE", "BANK_MARKETING"],
     )
     parser.add_argument("--epochs", type=int, default=5)
     args = parser.parse_args()
-
-    dataset = DatasetType[args.dataset]
     epochs = args.epochs
 
-    trainloader = create_dataloader(dataset=dataset, batch_size=64, train=True)
-    valloader = create_dataloader(dataset=dataset, batch_size=64, train=False)
+    dataset = UCI_DATASET[args.dataset]
+    n_classes = NUM_CLASSES[dataset]
+    input_features = INPUT_FEATURES[dataset]
+
+    train_dataset, test_dataset = from_uciml_to_dataset(dataset)
+
+    trainloader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=32, shuffle=True
+    )
+    valloader = torch.utils.data.DataLoader(test_dataset, batch_size=32, shuffle=False)
 
     # Define model
-    model = KAN([INPUT_SIZE, HIDDEN_SIZE, NUM_CLASSES[dataset]])
+    model = KAN([input_features, HIDDEN_SIZE, NUM_CLASSES[dataset]])
     model.to(DEVICE)
     optimizer = optim.AdamW(model.parameters(), lr=LR, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.8)
@@ -66,12 +70,12 @@ if __name__ == "__main__":
             scheduler,
             epochs,
             DEVICE,
-            input_features=INPUT_SIZE,
+            input_features=input_features,
         )
     )
 
     linear_model = LinearNet(
-        num_classes=NUM_CLASSES[dataset], input_size=INPUT_SIZE, hidden_size=HIDDEN_SIZE
+        num_classes=NUM_CLASSES[dataset], input_size=input_features, hidden_size=HIDDEN_SIZE
     )
     linear_model.to(DEVICE)
     optimizer = optim.AdamW(linear_model.parameters(), lr=LR, weight_decay=1e-4)
@@ -93,11 +97,11 @@ if __name__ == "__main__":
         scheduler,
         epochs,
         DEVICE,
-        input_features=INPUT_SIZE,
+        input_features=input_features,
     )
 
     hybrid_model = HybridNet(
-        num_classes=NUM_CLASSES[dataset], hidden_size=HIDDEN_SIZE, input_size=INPUT_SIZE
+        num_classes=NUM_CLASSES[dataset], hidden_size=HIDDEN_SIZE, input_size=input_features
     )
     hybrid_model.to(DEVICE)
     optimizer = optim.AdamW(hybrid_model.parameters(), lr=LR, weight_decay=1e-4)
@@ -119,7 +123,7 @@ if __name__ == "__main__":
         scheduler,
         epochs,
         DEVICE,
-        input_features=INPUT_SIZE,
+        input_features=input_features,
     )
 
     # Save models
@@ -134,7 +138,6 @@ if __name__ == "__main__":
     torch.save(linear_model.state_dict(), dataset_dir + "linear.pth")
     torch.save(hybrid_model.state_dict(), dataset_dir + "hybrid.pth")
 
-    # Plot results
     plot_results(
         train_losses,
         train_accuracies,
@@ -148,7 +151,7 @@ if __name__ == "__main__":
         hybrid_train_accuracies,
         hybrid_val_losses,
         hybrid_val_accuracies,
-        dataset_dir,
+        directory=dataset_dir,
     )
 
     save_results(
@@ -164,7 +167,6 @@ if __name__ == "__main__":
         hybrid_train_accuracies,
         hybrid_val_losses,
         hybrid_val_accuracies,
-        dataset_dir,
+        directory=dataset_dir,
     )
-
     logger.info("Results saved.", dataset_dir=dataset_dir)
