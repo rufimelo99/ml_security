@@ -80,7 +80,6 @@ class HybridLinearKAN(torch.nn.Module):
         base_activation=torch.nn.SiLU,
         grid_eps=0.02,
         grid_range=[-1, 1],
-        dropout_prob=0.3,
     ):
         super(HybridLinearKAN, self).__init__()
         self.in_features = in_features
@@ -110,9 +109,6 @@ class HybridLinearKAN(torch.nn.Module):
         self.spline_scaler = torch.nn.Parameter(
             torch.Tensor(out_features, in_features)
             )
-        # Dropout layer for spline weights
-        self.spline_dropout = torch.nn.Dropout(p=dropout_prob)
-
 
         self.scale_noise = scale_noise
         self.scale_base = scale_base
@@ -212,9 +208,7 @@ class HybridLinearKAN(torch.nn.Module):
 
     @property
     def scaled_spline_weight(self):
-        # Apply dropout to spline weights
-        spline_weight_dropped = self.spline_dropout(self.spline_weight)
-        return spline_weight_dropped * (
+        return self.spline_weight * (
             self.spline_scaler.unsqueeze(-1)
         )
 
