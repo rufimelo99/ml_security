@@ -194,16 +194,14 @@ class HybridLinearKAN(torch.nn.Module):
         assert x.dim() == 2 and x.size(1) == self.in_features
         assert y.size() == (x.size(0), self.in_features, self.out_features)
 
-        A = self._b_splines(x).transpose(
-            0, 1
-        )  # (in_features, batch_size, grid_size + spline_order)
-        B = y.transpose(0, 1)  # (in_features, batch_size, out_features)
-        solution = torch.linalg.lstsq(
-            A, B
-        ).solution  # (in_features, grid_size + spline_order, out_features)
-        result = solution.permute(
-            2, 0, 1
-        )  # (out_features, in_features, grid_size + spline_order)
+        # (in_features, batch_size, grid_size + spline_order)
+        A = self._b_splines(x).transpose(0, 1)  
+        # (in_features, batch_size, out_features)
+        B = y.transpose(0, 1)  
+        # (in_features, grid_size + spline_order, out_features)
+        solution = torch.linalg.lstsq(A, B).solution  
+        # (out_features, in_features, grid_size + spline_order)
+        result = solution.permute(2, 0, 1) 
 
         assert result.size() == (
             self.out_features,
