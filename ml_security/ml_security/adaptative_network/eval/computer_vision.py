@@ -25,11 +25,11 @@ LR = 1e-3
 
 
 class HybridNet(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, num_classes=NUM_CLASSES[DatasetType.MNIST]):
         super(HybridNet, self).__init__()
         self.liner_kan1 = HybridLinearKAN(INPUT_SIZE, HIDDEN_SIZE)
         self.linear_1 = HybridLinearKAN(HIDDEN_SIZE, HIDDEN_SIZE)
-        self.liner_kan2 = HybridLinearKAN(HIDDEN_SIZE, NUM_CLASSES[DatasetType.MNIST])
+        self.liner_kan2 = HybridLinearKAN(HIDDEN_SIZE, num_classes)
 
     def forward(self, x):
         x = x.view(-1, INPUT_SIZE)
@@ -42,11 +42,11 @@ class HybridNet(torch.nn.Module):
 
 
 class LinearNet(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, num_classes=NUM_CLASSES[DatasetType.MNIST]):
         super(LinearNet, self).__init__()
         self.linear1 = torch.nn.Linear(INPUT_SIZE, HIDDEN_SIZE)
         self.linear2 = torch.nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE)
-        self.linear3 = torch.nn.Linear(HIDDEN_SIZE, NUM_CLASSES[DatasetType.MNIST])
+        self.linear3 = torch.nn.Linear(HIDDEN_SIZE, num_classes)
 
     def forward(self, x):
         x = x.view(-1, INPUT_SIZE)
@@ -362,6 +362,9 @@ def classic_training(
         model.train()
         with tqdm(trainloader) as pbar:
             for i, (images, labels) in enumerate(pbar):
+                if images.shape[1] == 3:
+                    # convert to grayscale
+                    images = images.mean(dim=1, keepdim=True)
                 images = images.view(-1, 28 * 28).to(device)
                 optimizer.zero_grad()
                 output = model(images)
@@ -380,6 +383,9 @@ def classic_training(
         val_accuracy = 0
         with torch.no_grad():
             for images, labels in valloader:
+                if images.shape[1] == 3:
+                    # convert to grayscale
+                    images = images.mean(dim=1, keepdim=True)
                 images = images.view(-1, 28 * 28).to(device)
                 output = model(images)
                 val_loss += criterion(output, labels.to(device)).item()
@@ -402,13 +408,14 @@ def classic_training(
 
 
 if __name__ == "__main__":
+    dataset = DatasetType.CIFAR10
     trainloader = create_dataloader(
-        dataset=DatasetType.MNIST, batch_size=64, train=True
+        dataset=dataset, batch_size=64, train=True
     )
-    valloader = create_dataloader(dataset=DatasetType.MNIST, batch_size=64, train=False)
+    valloader = create_dataloader(dataset=dataset, batch_size=64, train=False)
 
     # Define model
-    model = KAN([INPUT_SIZE, HIDDEN_SIZE, NUM_CLASSES[DatasetType.MNIST]])
+    model = KAN([INPUT_SIZE, HIDDEN_SIZE, NUM_CLASSES[dataset]])
     model.to(DEVICE)
     optimizer = optim.AdamW(model.parameters(), lr=LR, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.8)
@@ -425,7 +432,7 @@ if __name__ == "__main__":
         DEVICE,
     )
 
-    linear_model = LinearNet()
+    linear_model = LinearNet(num_classes=NUM_CLASSES[dataset])
     linear_model.to(DEVICE)
     optimizer = optim.AdamW(linear_model.parameters(), lr=LR, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.8)
@@ -442,7 +449,7 @@ if __name__ == "__main__":
         DEVICE,
     )
 
-    hybrid_model = HybridNet()
+    hybrid_model = HybridNet(num_classes=NUM_CLASSES[dataset])
     hybrid_model.to(DEVICE)
     optimizer = optim.AdamW(hybrid_model.parameters(), lr=LR, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.8)
