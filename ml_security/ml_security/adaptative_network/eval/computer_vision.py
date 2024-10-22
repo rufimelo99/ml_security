@@ -552,7 +552,7 @@ def save_results(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--dataset", type=str, default="MNIST", choices=["MNIST", "CIFAR10"]
+        "--dataset", type=str, default="MNIST", choices=["MNIST", "CIFAR10", "FASHION_MNIST"]
     )
     parser.add_argument("--epochs", type=int, default=5)
     args = parser.parse_args()
