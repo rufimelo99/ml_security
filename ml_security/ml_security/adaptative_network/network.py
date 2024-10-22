@@ -45,7 +45,6 @@ class HybridLinearKAN(torch.nn.Module):
         scale_noise (float): Scale of the noise added to the spline weights.
         scale_base (float): Scale of the base weight initialization.
         scale_spline (float): Scale of the spline weight initialization.
-        enable_standalone_scale_spline (bool): Whether to enable the standalone scale of the spline weights.
         base_activation (torch.nn.Module): Base activation function.
         grid_eps (float): Grid epsilon.
         grid_range (list): Grid range.
@@ -63,7 +62,6 @@ class HybridLinearKAN(torch.nn.Module):
         scale_noise (float): Scale of the noise added to the spline weights.
         scale_base (float): Scale of the base weight initialization.
         scale_spline (float): Scale of the spline weight initialization.
-        enable_standalone_scale_spline (bool): Whether to enable the standalone scale of the spline weights.
         base_activation (torch.nn.Module): Base activation function.
         grid_eps (float): Grid epsilon.
     """
@@ -74,11 +72,10 @@ class HybridLinearKAN(torch.nn.Module):
         out_features,
         grid_size=5,
         spline_order=3,
-        scale_noise=0.1,
+        scale_noise=0.01,
         scale_base=1.0,
         scale_spline=1.0,
-        enable_standalone_scale_spline=True,
-        base_activation=torch.nn.SiLU,
+        base_activation=torch.nn.LeakyReLU,
         grid_eps=0.02,
         grid_range=[-1, 1],
     ):
@@ -97,26 +94,21 @@ class HybridLinearKAN(torch.nn.Module):
             .expand(in_features, -1)
             .contiguous()
         )
-        self.register_buffer("grid", grid)
+        self.grid = torch.nn.Parameter(grid)  # Making grid learnable
 
-        self.base_weight = torch.nn.Parameter(torch.Tensor(out_features, in_features))
         self.spline_weight = torch.nn.Parameter(
             torch.Tensor(out_features, in_features, grid_size + spline_order)
         )
         self.linear_weight = torch.nn.Parameter(
             torch.Tensor(out_features, out_features)
         )
-        torch.nn.init.xavier_uniform(self.linear_weight)
+        torch.nn.init.xavier_uniform_(self.linear_weight)
 
-        if enable_standalone_scale_spline:
-            self.spline_scaler = torch.nn.Parameter(
-                torch.Tensor(out_features, in_features)
-            )
+        self.spline_scaler = torch.nn.Parameter(torch.Tensor(out_features, in_features))
 
         self.scale_noise = scale_noise
         self.scale_base = scale_base
         self.scale_spline = scale_spline
-        self.enable_standalone_scale_spline = enable_standalone_scale_spline
         self.base_activation = base_activation()
         self.grid_eps = grid_eps
 
@@ -126,9 +118,6 @@ class HybridLinearKAN(torch.nn.Module):
         """
         Reset the parameters of the layer (except the linear weight) to their initial values.
         """
-        torch.nn.init.kaiming_uniform_(
-            self.base_weight, a=math.sqrt(5) * self.scale_base
-        )
         with torch.no_grad():
             noise = (
                 (
@@ -139,19 +128,17 @@ class HybridLinearKAN(torch.nn.Module):
                 / self.grid_size
             )
             self.spline_weight.data.copy_(
-                (self.scale_spline if not self.enable_standalone_scale_spline else 1.0)
-                * self.curve2coeff(
+                self.scale_spline
+                * self._curve2coeff(
                     self.grid.T[self.spline_order : -self.spline_order],
                     noise,
                 )
             )
-            if self.enable_standalone_scale_spline:
-                # torch.nn.init.constant_(self.spline_scaler, self.scale_spline)
-                torch.nn.init.kaiming_uniform_(
-                    self.spline_scaler, a=math.sqrt(5) * self.scale_spline
-                )
+            torch.nn.init.kaiming_uniform_(
+                self.spline_scaler, a=math.sqrt(5) * self.scale_spline
+            )
 
-    def b_splines(self, x: torch.Tensor):
+    def _b_splines(self, x: torch.Tensor):
         """
         Computes the B-spline bases for the given input tensor.
 
@@ -186,7 +173,7 @@ class HybridLinearKAN(torch.nn.Module):
         )
         return bases.contiguous()
 
-    def curve2coeff(self, x: torch.Tensor, y: torch.Tensor):
+    def _curve2coeff(self, x: torch.Tensor, y: torch.Tensor):
         """
         Computes the coefficients of the curve that interpolates the given points.
 
@@ -200,16 +187,14 @@ class HybridLinearKAN(torch.nn.Module):
         assert x.dim() == 2 and x.size(1) == self.in_features
         assert y.size() == (x.size(0), self.in_features, self.out_features)
 
-        A = self.b_splines(x).transpose(
-            0, 1
-        )  # (in_features, batch_size, grid_size + spline_order)
-        B = y.transpose(0, 1)  # (in_features, batch_size, out_features)
-        solution = torch.linalg.lstsq(
-            A, B
-        ).solution  # (in_features, grid_size + spline_order, out_features)
-        result = solution.permute(
-            2, 0, 1
-        )  # (out_features, in_features, grid_size + spline_order)
+        # (in_features, batch_size, grid_size + spline_order)
+        A = self._b_splines(x).transpose(0, 1)
+        # (in_features, batch_size, out_features)
+        B = y.transpose(0, 1)
+        # (in_features, grid_size + spline_order, out_features)
+        solution = torch.linalg.lstsq(A, B).solution
+        # (out_features, in_features, grid_size + spline_order)
+        result = solution.permute(2, 0, 1)
 
         assert result.size() == (
             self.out_features,
@@ -220,11 +205,7 @@ class HybridLinearKAN(torch.nn.Module):
 
     @property
     def scaled_spline_weight(self):
-        return self.spline_weight * (
-            self.spline_scaler.unsqueeze(-1)
-            if self.enable_standalone_scale_spline
-            else 1.0
-        )
+        return self.spline_weight * (self.spline_scaler.unsqueeze(-1))
 
     def forward(self, x: torch.Tensor):
         assert x.size(-1) == self.in_features
@@ -232,11 +213,9 @@ class HybridLinearKAN(torch.nn.Module):
         x = x.reshape(-1, self.in_features)
 
         spline_output = F.linear(
-            self.b_splines(x).view(x.size(0), -1),
+            self._b_splines(x).view(x.size(0), -1),
             self.scaled_spline_weight.view(self.out_features, -1),
         )
-
-        output = torch.matmul(self.linear_weight, spline_output.T).T
-
+        output = F.linear(spline_output, self.linear_weight.T)
         output = output.reshape(*original_shape[:-1], self.out_features)
         return output
