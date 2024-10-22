@@ -4,12 +4,12 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torchvision import transforms
+from tqdm import tqdm
 
 from ml_security.adaptative_network.eval.utils import (
-    HybridNet,
-    CNNKAN,
     CNN,
-    classic_training,
+    CNNKAN,
     plot_results,
     save_results,
 )
@@ -28,7 +28,39 @@ HIDDEN_SIZE = 100
 LR = 1e-3
 
 
-##############################################
+def train(model, device, train_loader, optimizer, epoch):
+    model.train()
+    accuracy = 0
+    total_loss = 0
+    for batch_idx, (data, target) in enumerate(train_loader):
+        data, target = data.to(device), target.to(device)
+        optimizer.zero_grad()
+        output = model(data)
+        loss = nn.CrossEntropyLoss()(output, target)
+        loss.backward()
+        optimizer.step()
+        total_loss += loss.item()
+        pred = output.argmax(dim=1, keepdim=True)
+        accuracy += pred.eq(target.view_as(pred)).sum().item()
+    accuracy /= len(train_loader.dataset)
+    total_loss /= len(train_loader.dataset)
+    return total_loss, accuracy
+
+
+def evaluate(model, device, test_loader):
+    model.eval()
+    test_loss = 0
+    correct = 0
+    with torch.no_grad():
+        for data, target in test_loader:
+            data, target = data.to(device), target.to(device)
+            output = model(data)
+            test_loss += nn.CrossEntropyLoss()(output, target).item()
+            pred = output.argmax(dim=1, keepdim=True)
+            correct += pred.eq(target.view_as(pred)).sum().item()
+    test_loss /= len(test_loader.dataset)
+    correct /= len(test_loader.dataset)
+    return test_loss, correct
 
 
 if __name__ == "__main__":
@@ -41,11 +73,6 @@ if __name__ == "__main__":
             "MNIST",
             "CIFAR10",
             "FASHION_MNIST",
-            "IRIS",
-            "WINE",
-            "BREAST_CANCER",
-            "HEART_DISEASE",
-            "BANK_MARKETING",
         ],
     )
     parser.add_argument("--epochs", type=int, default=5)
@@ -56,56 +83,59 @@ if __name__ == "__main__":
 
     epochs = args.epochs
 
-    from torchvision import datasets, transforms
-    
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))  
-    ])
+    transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+        ]
+    )
     if dataset_info.origin == "TORCHVISION":
-        trainloader = create_dataloader(dataset=dataset, batch_size=64, train=True, transformation=transform)
-        valloader = create_dataloader(dataset=dataset, batch_size=64, train=False, transformation=transform)
+        trainloader = create_dataloader(
+            dataset=dataset, batch_size=64, train=True, transformation=transform
+        )
+        valloader = create_dataloader(
+            dataset=dataset, batch_size=64, train=False, transformation=transform
+        )
     else:
         raise ValueError("Unknown dataset origin.")
 
-
-    classic_cnn = CNN(    )
+    classic_cnn = CNN()
     classic_cnn.to(DEVICE)
     optimizer = optim.AdamW(classic_cnn.parameters(), lr=LR, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.8)
     criterion = nn.CrossEntropyLoss()
 
+    classic_cnn_train_losses = []
+    classic_cnn_val_losses = []
+    classic_cnn_train_accuracies = []
+    classic_cnn_val_accuracies = []
 
-    def train(model, device, train_loader, optimizer, epoch):
-        model.train()
-        for batch_idx, (data, target) in enumerate(train_loader):
-            data, target = data.to(device), target.to(device)
-            optimizer.zero_grad()
-            output = model(data)
-            loss = nn.CrossEntropyLoss()(output, target)
-            loss.backward()
-            optimizer.step()
-            if batch_idx % 10 == 0:
-                print(f'Train Epoch: {epoch} [{batch_idx * len(data)}/{len(train_loader.dataset)} ({100. * batch_idx / len(train_loader):.0f}%)]\tLoss: {loss.item():.6f}')
+    for epoch in tqdm(range(1, epochs + 1)):
+        loss, acc = train(classic_cnn, DEVICE, trainloader, optimizer, epoch)
+        classic_cnn_train_losses.append(loss)
+        classic_cnn_train_accuracies.append(acc)
+        loss, acc = evaluate(classic_cnn, DEVICE, valloader)
+        classic_cnn_val_losses.append(loss)
+        classic_cnn_val_accuracies.append(acc)
 
-    def evaluate(model, device, test_loader):
-        model.eval()
-        test_loss = 0
-        correct = 0
-        with torch.no_grad():
-            for data, target in test_loader:
-                data, target = data.to(device), target.to(device)
-                output = model(data)
-                test_loss += nn.CrossEntropyLoss()(output, target).item()
-                pred = output.argmax(dim=1, keepdim=True)
-                correct += pred.eq(target.view_as(pred)).sum().item()
-        test_loss /= len(test_loader.dataset)
-        print(f'\nTest set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({100. * correct / len(test_loader.dataset):.0f}%)\n')
+    kan_cnn = CNNKAN()
+    kan_cnn.to(DEVICE)
+    optimizer = optim.AdamW(kan_cnn.parameters(), lr=LR, weight_decay=1e-4)
+    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.8)
+    criterion = nn.CrossEntropyLoss()
 
+    kan_cnn_train_losses = []
+    kan_cnn_val_losses = []
+    kan_cnn_train_accuracies = []
+    kan_cnn_val_accuracies = []
 
-    for epoch in range(1, epochs + 1):
-        train(classic_cnn, DEVICE, trainloader, optimizer, epoch)
-        evaluate(classic_cnn, DEVICE, valloader)
+    for epoch in tqdm(range(1, epochs + 1)):
+        loss, acc = train(kan_cnn, DEVICE, trainloader, optimizer, epoch)
+        kan_cnn_train_losses.append(loss)
+        kan_cnn_train_accuracies.append(acc)
+        loss, acc = evaluate(kan_cnn, DEVICE, valloader)
+        kan_cnn_val_losses.append(loss)
+        kan_cnn_val_accuracies.append
 
     # Save models
     directory = "ml_security/adaptative_network/eval/cnn/"
@@ -114,3 +144,30 @@ if __name__ == "__main__":
     dataset_dir = directory + args.dataset + "/"
     if not os.path.exists(dataset_dir):
         os.makedirs(dataset_dir)
+
+    plot_results(
+        classic_cnn_train_losses,
+        classic_cnn_val_losses,
+        classic_cnn_train_accuracies,
+        classic_cnn_val_accuracies,
+        kan_cnn_train_losses,
+        kan_cnn_val_losses,
+        kan_cnn_train_accuracies,
+        kan_cnn_val_accuracies,
+        dataset_dir + "results.png",
+    )
+
+    save_results(
+        classic_cnn_train_losses,
+        classic_cnn_val_losses,
+        classic_cnn_train_accuracies,
+        classic_cnn_val_accuracies,
+        kan_cnn_train_losses,
+        kan_cnn_val_losses,
+        kan_cnn_train_accuracies,
+        kan_cnn_val_accuracies,
+        dataset_dir + "results.csv",
+    )
+
+    torch.save(classic_cnn.state_dict(), dataset_dir + "classic_cnn.pth")
+    torch.save(kan_cnn.state_dict(), dataset_dir + "kan_cnn.pth")

@@ -233,15 +233,18 @@ class LinearNet(torch.nn.Module):
         x = self.linear3(x)
         return x
 
+
 import torch.nn as nn
+
+
 class CNNKAN(nn.Module):
     def __init__(self):
         super(CNNKAN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)  
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
         self.pool1 = nn.MaxPool2d(2)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
         self.pool2 = nn.MaxPool2d(2)
-        self.kan1 = HybridLinearKAN(64 * 8 * 8, 256)  
+        self.kan1 = HybridLinearKAN(64 * 8 * 8, 256)
         self.kan2 = HybridLinearKAN(256, 10)
 
     def forward(self, x):
@@ -253,7 +256,8 @@ class CNNKAN(nn.Module):
         x = self.kan1(x)
         x = self.kan2(x)
         return x
-    
+
+
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
@@ -262,9 +266,9 @@ class CNN(nn.Module):
         self.pool1 = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
         self.pool2 = nn.MaxPool2d(2, 2)
-        
+
         # Fully connected layers
-        self.fc1 = nn.Linear(64 * 8 * 8, 256)  
+        self.fc1 = nn.Linear(64 * 8 * 8, 256)
         self.fc2 = nn.Linear(256, 10)  # Final output layer
 
     def forward(self, x):
@@ -273,12 +277,12 @@ class CNN(nn.Module):
         x = self.pool1(x)
         x = F.selu(self.conv2(x))
         x = self.pool2(x)
-        
+
         # Flattening the layer for the fully connected layer
         x = x.view(x.size(0), -1)
-        
+
         # Fully connected layers
         x = F.selu(self.fc1(x))
         x = self.fc2(x)
-        
-        return x 
+
+        return x
