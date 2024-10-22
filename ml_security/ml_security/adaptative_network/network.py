@@ -106,9 +106,7 @@ class HybridLinearKAN(torch.nn.Module):
         )
         torch.nn.init.xavier_uniform_(self.linear_weight)
 
-        self.spline_scaler = torch.nn.Parameter(
-            torch.Tensor(out_features, in_features)
-            )
+        self.spline_scaler = torch.nn.Parameter(torch.Tensor(out_features, in_features))
 
         self.scale_noise = scale_noise
         self.scale_base = scale_base
@@ -132,7 +130,8 @@ class HybridLinearKAN(torch.nn.Module):
                 / self.grid_size
             )
             self.spline_weight.data.copy_(
-                self.scale_spline * self._curve2coeff(
+                self.scale_spline
+                * self._curve2coeff(
                     self.grid.T[self.spline_order : -self.spline_order],
                     noise,
                 )
@@ -191,13 +190,13 @@ class HybridLinearKAN(torch.nn.Module):
         assert y.size() == (x.size(0), self.in_features, self.out_features)
 
         # (in_features, batch_size, grid_size + spline_order)
-        A = self._b_splines(x).transpose(0, 1)  
+        A = self._b_splines(x).transpose(0, 1)
         # (in_features, batch_size, out_features)
-        B = y.transpose(0, 1)  
+        B = y.transpose(0, 1)
         # (in_features, grid_size + spline_order, out_features)
-        solution = torch.linalg.lstsq(A, B).solution  
+        solution = torch.linalg.lstsq(A, B).solution
         # (out_features, in_features, grid_size + spline_order)
-        result = solution.permute(2, 0, 1) 
+        result = solution.permute(2, 0, 1)
 
         assert result.size() == (
             self.out_features,
@@ -208,9 +207,7 @@ class HybridLinearKAN(torch.nn.Module):
 
     @property
     def scaled_spline_weight(self):
-        return self.spline_weight * (
-            self.spline_scaler.unsqueeze(-1)
-        )
+        return self.spline_weight * (self.spline_scaler.unsqueeze(-1))
 
     def forward(self, x: torch.Tensor):
         assert x.size(-1) == self.in_features

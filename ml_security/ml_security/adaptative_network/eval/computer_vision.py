@@ -409,9 +409,7 @@ def classic_training(
 
 if __name__ == "__main__":
     dataset = DatasetType.CIFAR10
-    trainloader = create_dataloader(
-        dataset=dataset, batch_size=64, train=True
-    )
+    trainloader = create_dataloader(dataset=dataset, batch_size=64, train=True)
     valloader = create_dataloader(dataset=dataset, batch_size=64, train=False)
 
     # Define model
