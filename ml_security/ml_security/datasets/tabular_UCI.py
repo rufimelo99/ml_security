@@ -5,7 +5,7 @@
 import warnings
 
 warnings.filterwarnings("ignore")
-from enum import Enum
+
 
 import torch
 from sklearn.preprocessing import StandardScaler
@@ -22,38 +22,6 @@ except ImportError:
     raise ImportError(
         'ucimlrepo not installed. Please install it by running "pip install ucimlrepo"'
     )
-
-
-class UCI_DATASET(str, Enum):
-    IRIS = "iris"
-    WINE = "wine"
-    BREAST_CANCER = "breast_cancer"
-    HEART_DISEASE = "heart_disease"
-    BANK_MARKETING = "bank_marketing"
-
-
-# UCI ID to dataset mapping based on API endpoint.
-# Ex: https://archive.ics.uci.edu/dataset/53/iris
-MAPPING_UCI_ID_DATASET = {UCI_DATASET.IRIS: 53,
-                            UCI_DATASET.WINE: 109,
-                            UCI_DATASET.BREAST_CANCER: 17,
-                            UCI_DATASET.HEART_DISEASE: 45,
-                            UCI_DATASET.BANK_MARKETING: 222,
-                          }
-
-NUM_CLASSES = {UCI_DATASET.IRIS: 3,
-                UCI_DATASET.WINE: 3,
-                UCI_DATASET.BREAST_CANCER: 2,
-                UCI_DATASET.HEART_DISEASE: 2,
-                UCI_DATASET.BANK_MARKETING: 2
-                  }
-
-INPUT_FEATURES = {UCI_DATASET.IRIS: 4,
-                    UCI_DATASET.WINE: 13,
-                    UCI_DATASET.BREAST_CANCER: 30,
-                    UCI_DATASET.HEART_DISEASE: 13,
-                    UCI_DATASET.BANK_MARKETING: 16
-                    }
 
 
 def process_x(df):
@@ -161,9 +129,8 @@ def split_dataset(dataset, split_ratio: float = 0.8):
     return train_dataset, test_dataset
 
 
-def from_uciml_to_dataset(dataset_type: UCI_DATASET, split_ratio: float = 0.8):
-    ucimlid = MAPPING_UCI_ID_DATASET[dataset_type]
-    ucimldataset = fetch_ucirepo(id=ucimlid)
+def from_uciml_to_dataset(uci_id: int, split_ratio: float):
+    ucimldataset = fetch_ucirepo(id=uci_id)
 
     x = ucimldataset.data.features
     y = ucimldataset.data.targets
