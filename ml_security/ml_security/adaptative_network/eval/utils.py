@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import tqdm
-
+import math
 from ml_security.adaptative_network.network import HybridLinearKAN
 from ml_security.logger import logger
 
