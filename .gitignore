@@ -158,5 +158,36 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+# Ignore all .pt files
 *.pt
+
+# Ignore macOS system files
 .DS_Store
+ml_security/.DS_Store
+
+# Ignore all data directories
+/data
+/ml_security/data
+/ml_security/ml_security/data
+/ml_security/ml_security/examples/data
+/ml_security/ml_security/melo_nn/data
+/ml_security/ml_security/memorization/controlled
+/ml_security/ml_security/adaptative_linear_network/data
+/ml_security/ml_security/adaptative_network/data
+
+# Ignore specific dataset files
+/ml_security/ml_security/datasets/nlp/commoncrawl.warc.wet
+
+# Ignore evaluation directories
+/ml_security/ml_security/adaptative_network/eval/*
+/ml_security/ml_security/adaptative_network/eval/cnn
+
+# Specific datasets under evaluation
+/ml_security/ml_security/adaptative_network/eval/CIFAR10
+/ml_security/ml_security/adaptative_network/eval/FASHION_MNIST
+/ml_security/ml_security/adaptative_network/eval/BREAST_CANCER
+/ml_security/ml_security/adaptative_network/eval/BANK_MARKETING
+/ml_security/ml_security/adaptative_network/eval/IRIS
+
+# Ignore model directories
+/ml_security/ml_security/adaptative_network/model
