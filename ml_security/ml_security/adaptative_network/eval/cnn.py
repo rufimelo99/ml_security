@@ -10,6 +10,7 @@ from tqdm import tqdm
 from ml_security.adaptative_network.eval.utils import (
     CNN,
     CNNKAN,
+    PreActResNet18,
     plot_results,
     save_results,
 )
@@ -30,8 +31,8 @@ LR = 1e-3
 
 def train(model, device, train_loader, optimizer, epoch):
     model.train()
-    accuracy = 0
     total_loss = 0
+    correct = 0
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
@@ -41,10 +42,10 @@ def train(model, device, train_loader, optimizer, epoch):
         optimizer.step()
         total_loss += loss.item()
         pred = output.argmax(dim=1, keepdim=True)
-        accuracy += pred.eq(target.view_as(pred)).sum().item()
-    accuracy /= len(train_loader.dataset)
+        correct += pred.eq(target.view_as(pred)).sum().item()
     total_loss /= len(train_loader.dataset)
-    return total_loss, accuracy
+    correct /= len(train_loader.dataset)
+    return total_loss, correct
 
 
 def evaluate(model, device, test_loader):
@@ -99,7 +100,7 @@ if __name__ == "__main__":
     else:
         raise ValueError("Unknown dataset origin.")
 
-    classic_cnn = CNN()
+    classic_cnn = PreActResNet18()
     classic_cnn.to(DEVICE)
     optimizer = optim.AdamW(classic_cnn.parameters(), lr=LR, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.8)
@@ -114,11 +115,12 @@ if __name__ == "__main__":
         loss, acc = train(classic_cnn, DEVICE, trainloader, optimizer, epoch)
         classic_cnn_train_losses.append(loss)
         classic_cnn_train_accuracies.append(acc)
+        logger.info(f"Epoch {epoch} - Train Loss: {loss} - Train Acc: {acc}")
         loss, acc = evaluate(classic_cnn, DEVICE, valloader)
         classic_cnn_val_losses.append(loss)
         classic_cnn_val_accuracies.append(acc)
 
-    kan_cnn = CNNKAN()
+    kan_cnn = PreActResNet18(kan_version=True)
     kan_cnn.to(DEVICE)
     optimizer = optim.AdamW(kan_cnn.parameters(), lr=LR, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.8)
@@ -135,7 +137,7 @@ if __name__ == "__main__":
         kan_cnn_train_accuracies.append(acc)
         loss, acc = evaluate(kan_cnn, DEVICE, valloader)
         kan_cnn_val_losses.append(loss)
-        kan_cnn_val_accuracies.append
+        kan_cnn_val_accuracies.append(acc)
 
     # Save models
     directory = "ml_security/adaptative_network/eval/cnn/"
@@ -147,24 +149,24 @@ if __name__ == "__main__":
 
     plot_results(
         classic_cnn_train_losses,
-        classic_cnn_val_losses,
         classic_cnn_train_accuracies,
+        classic_cnn_val_losses,
         classic_cnn_val_accuracies,
         kan_cnn_train_losses,
-        kan_cnn_val_losses,
         kan_cnn_train_accuracies,
+        kan_cnn_val_losses,
         kan_cnn_val_accuracies,
         dataset_dir + "results.png",
     )
 
     save_results(
         classic_cnn_train_losses,
-        classic_cnn_val_losses,
         classic_cnn_train_accuracies,
+        classic_cnn_val_losses,
         classic_cnn_val_accuracies,
         kan_cnn_train_losses,
-        kan_cnn_val_losses,
         kan_cnn_train_accuracies,
+        kan_cnn_val_losses,
         kan_cnn_val_accuracies,
         dataset_dir + "results.csv",
     )
