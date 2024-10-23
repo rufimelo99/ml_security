@@ -10,10 +10,11 @@ from ml_security.attacks.membership_inference_attack import create_attack_datalo
 from ml_security.datasets.computer_vision import DatasetType, create_dataloader
 from ml_security.examples.mnist.model import Net
 from ml_security.logger import logger
-from ml_security.utils import get_device, set_seed
+from ml_security.utils.utils import get_device, set_seed
 
 # Sets random seed for reproducibility.
 set_seed(42)
+MODEL_PATH = "ml_security/examples/mnist/mnist_cnn.pt"
 
 
 # Defines a simple attack model.
@@ -32,8 +33,6 @@ class AttackModel(nn.Module):
 
 
 if __name__ == "__main__":
-    pretrained_model = "examples/mnist/mnist_cnn.pt"
-
     # Defines what device we are using.
     device = get_device()
     logger.info("Initializing the network", device=device)
@@ -43,7 +42,7 @@ if __name__ == "__main__":
 
     # Loads the pretrained model.
     model.load_state_dict(
-        torch.load(pretrained_model, map_location=device, weights_only=True)
+        torch.load(MODEL_PATH, map_location=device, weights_only=True)
     )
 
     # Sets the model in evaluation mode. In this case this is for the Dropout layers

@@ -8,7 +8,7 @@ from tqdm import tqdm
 from ml_security.datasets.computer_vision import DatasetType, create_dataloader
 from ml_security.examples.mnist.model import Net
 from ml_security.logger import logger
-from ml_security.utils import get_device, set_seed
+from ml_security.utils.utils import get_device, set_seed
 
 # Sets random seed for reproducibility.
 set_seed(42)
@@ -152,7 +152,7 @@ def plot_accuracy(epsilons, accuracies):
 
 if __name__ == "__main__":
     epsilons = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
-    pretrained_model = "examples/mnist/mnist_cnn.pt"
+    pretrained_model = "ml_security/examples/mnist/mnist_cnn.pt"
     transformation = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
     )

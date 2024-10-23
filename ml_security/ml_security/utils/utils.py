@@ -13,12 +13,12 @@ def set_seed(seed: int = 42):
     os.environ["PYTHONHASHSEED"] = str(seed)
 
 
-def get_device():
+def get_device(allow_mps: bool = True) -> torch.device:
     """Returns the best available device: CUDA (NVIDIA GPU), MPS (Apple Silicon GPU), or CPU."""
     if torch.cuda.is_available():
         device = torch.device("cuda")
         print(f"Using CUDA (GPU): {torch.cuda.get_device_name(0)}")
-    elif torch.backends.mps.is_available():
+    elif torch.backends.mps.is_available() and allow_mps:
         device = torch.device("mps")
         print("Using MPS (Apple Silicon GPU)")
     else:

@@ -10,3 +10,5 @@ tqdm==4.66.5
 torchvision
 matplotlib
 scikit-learn
+datasets
+pre-commit
