@@ -174,12 +174,12 @@ ml_security/.DS_Store
 /ml_security/ml_security/memorization/controlled
 /ml_security/ml_security/adaptative_linear_network/data
 /ml_security/ml_security/adaptative_network/data
+/ml_security/ml_security/adaptative_network/eval/data
 
 # Ignore specific dataset files
 /ml_security/ml_security/datasets/nlp/commoncrawl.warc.wet
 
 # Ignore evaluation directories
-/ml_security/ml_security/adaptative_network/eval/*
 /ml_security/ml_security/adaptative_network/eval/cnn
 
 # Specific datasets under evaluation
@@ -188,6 +188,7 @@ ml_security/.DS_Store
 /ml_security/ml_security/adaptative_network/eval/BREAST_CANCER
 /ml_security/ml_security/adaptative_network/eval/BANK_MARKETING
 /ml_security/ml_security/adaptative_network/eval/IRIS
+/ml_security/ml_security/adaptative_network/eval/MNIST
 
 # Ignore model directories
 /ml_security/ml_security/adaptative_network/model
