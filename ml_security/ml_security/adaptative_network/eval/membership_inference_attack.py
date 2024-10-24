@@ -14,6 +14,8 @@ from ml_security.adaptative_network.eval.utils import (
     PreActBlock,
     PreActResNet,
     PreActResNetwithKAN,
+    CIFARCNNKAN,
+    CIFARCNN,
 )
 from ml_security.attacks.membership_inference_attack import create_attack_dataloader
 from ml_security.datasets.datasets import (
@@ -33,7 +35,8 @@ BATCH_SIZE = 64
 model_path = "ml_security/adaptative_network/eval/cnn/CIFAR10/classic_cnn.pth"
 
 # Load the model
-model = PreActResNet(PreActBlock, [2, 2, 2, 2])
+# model = PreActResNet(PreActBlock, [2, 2, 2, 2])
+model = CIFARCNN()
 model.load_state_dict(torch.load(model_path))
 model.to(DEVICE)
 model.eval()
@@ -51,10 +54,10 @@ transform = transforms.Compose(
 )
 if dataset_info.origin == "TORCHVISION":
     trainloader = create_dataloader(
-        dataset=dataset, batch_size=BATCH_SIZE, train=True, transformation=transform, max_samples=1000
+        dataset=dataset, batch_size=BATCH_SIZE, train=True, transformation=transform, max_samples=10000
     )
     valloader = create_dataloader(
-        dataset=dataset, batch_size=BATCH_SIZE, train=False, transformation=transform, max_samples=1000
+        dataset=dataset, batch_size=BATCH_SIZE, train=False, transformation=transform, max_samples=10000
     )
 else:
     raise ValueError("Unknown dataset origin.")
@@ -118,7 +121,7 @@ optimizer = optim.Adam(attack_model.parameters(), lr=0.001)
 # Trains the attack model.
 attack_model.train()
 
-for epoch in range(10):
+for epoch in range(100):
     for batch in tqdm(attack_loader):
         data, target = batch
         data, target = data.to(DEVICE), target.to(DEVICE)
@@ -139,9 +142,9 @@ with torch.no_grad():
         attack_predictions.append(output.cpu().numpy())
 
 
-
+# Check accuracy
 attack_predictions = np.concatenate(attack_predictions)
+attack_predictions = np.round(attack_predictions)
+accuracy = np.mean(attack_predictions == attack_labels)
 
-# Calculate the accuracy of the attack model.
-attack_accuracy = np.mean((attack_predictions > 0.5) == attack_labels)
-logger.info("Attack stats", accuracy=attack_accuracy.item())
+logger.info(f"Attack accuracy: {accuracy}")
