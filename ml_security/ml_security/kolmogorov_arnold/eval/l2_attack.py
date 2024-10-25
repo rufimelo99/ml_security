@@ -6,9 +6,9 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn.functional as F
 from tqdm import tqdm
 
+from ml_security.attacks.carlini_wagner_attack import test_cw_attack
 from ml_security.datasets.datasets import (
     DATASET_REGISTRY,
     DEFAULT_TRANSFORM_3CH,
@@ -22,75 +22,6 @@ from ml_security.utils.utils import get_device, set_seed
 set_seed(42)
 DEVICE = get_device()
 BATCH_SIZE = 64
-
-
-def l2_pgd_attack(model, images, labels, epsilon, alpha, iters):
-    images = images.to(DEVICE)
-    labels = labels.to(DEVICE)
-    ori_images = images.data
-
-    for i in range(iters):
-        images.requires_grad = True
-        outputs = model(images)
-
-        # Calculate loss
-        loss = F.cross_entropy(outputs, labels)
-        model.zero_grad()
-        loss.backward()
-
-        # Generate perturbations with the gradient
-        grad = images.grad.data
-
-        # Normalize the gradient for L2 attack
-        grad_norm = torch.norm(grad.view(grad.size(0), -1), dim=1).view(-1, 1, 1, 1)
-        grad = grad / (grad_norm + 1e-8)  # Avoid division by zero
-
-        # Update the image with small steps
-        adv_images = images + alpha * grad
-
-        # Clip the perturbation to stay within epsilon L2 norm
-        perturbation = adv_images - ori_images
-        perturbation_norm = torch.norm(
-            perturbation.view(perturbation.size(0), -1), dim=1
-        ).view(-1, 1, 1, 1)
-        perturbation = perturbation * torch.min(
-            torch.ones_like(perturbation_norm), epsilon / perturbation_norm
-        )
-
-        # Update adversarial image
-        images = ori_images + perturbation
-        images = torch.clamp(images, -1, 1)  # Keep image in valid range
-        images = images.detach()  # Detach the t
-    return images
-
-
-def test_l2_attack(model, test_loader, epsilon, alpha, iters):
-    correct = 0
-    adv_examples = []
-
-    for data, target in tqdm(test_loader):
-        data, target = data.to(DEVICE), target.to(DEVICE)
-
-        # Generate adversarial example
-        perturbed_data = l2_pgd_attack(model, data, target, epsilon, alpha, iters)
-
-        # Re-classify the perturbed image
-        output = model(perturbed_data)
-        final_pred = output.max(1, keepdim=True)[
-            1
-        ]  # Get the index of the max log-probability
-        correct += final_pred.eq(target.view_as(final_pred)).sum().item()
-
-        # get the adversarial examples when it is misclassified
-        adv_idxs = final_pred.ne(target.view_as(final_pred)).view(-1)
-        for i in range(len(adv_idxs)):
-            if not adv_idxs[i]:
-                adv_ex = perturbed_data[i].squeeze().detach().cpu().numpy()
-                adv_examples.append((target[i], final_pred[i].item(), adv_ex))
-
-    final_acc = correct / (float(len(test_loader)) * BATCH_SIZE)
-    logger.info("Final Accuracy", final_acc=final_acc)
-    return final_acc, adv_examples
 
 
 @torch.no_grad()
@@ -185,7 +116,7 @@ if __name__ == "__main__":
     max_examples = args.max_sample
 
     ##############
-    logger.info("Evaluating Classic CNN")
+    logger.info("Evaluating Classic CNN with Carlini-Wagner Attack")
     model = CNN()
     model.load_state_dict(
         torch.load("ml_security/kolmogorov_arnold/eval/cnn/CIFAR10/classic_cnn.pth")
@@ -195,14 +126,22 @@ if __name__ == "__main__":
     original_acc = test_original(model, valloader)
     logger.info("Original Accuracy", original_acc=original_acc)
 
-    final_acc, adv_examples = test_l2_attack(model, valloader, epsilon, alpha, iters)
-    directory = f"adv_examples/{get_str_parameters(epsilon, alpha, iters)}"
+    final_acc, adv_examples = test_cw_attack(
+        model,
+        valloader,
+        c=1e-4,
+        lr=0.01,
+        num_steps=2,
+        device=DEVICE,
+        batch_size=BATCH_SIZE,
+    )
+    directory = f"adv_examples_cw/eps_1.0_alpha_0.01_iters_1000"
     save_adv_examples(adv_examples, directory, max_examples=max_examples)
     save_results(final_acc, epsilon, alpha, iters, directory)
 
     ##############
-    logger.info("Evaluating KAN CNN")
 
+    logger.info("Evaluating KAN CNN with Carlini-Wagner Attack")
     model = CNNKAN()
     model.load_state_dict(
         torch.load("ml_security/kolmogorov_arnold/eval/cnn/CIFAR10/kan_cnn.pth")
@@ -212,7 +151,17 @@ if __name__ == "__main__":
     original_acc = test_original(model, valloader)
     logger.info("Original Accuracy", original_acc=original_acc)
 
-    final_acc, adv_examples = test_l2_attack(model, valloader, epsilon, alpha, iters)
-    directory = f"adv_examples_kan/{get_str_parameters(epsilon, alpha, iters)}"
+    final_acc, adv_examples = test_cw_attack(
+        model,
+        valloader,
+        c=1e-4,
+        lr=0.01,
+        num_steps=2,
+        device=DEVICE,
+        batch_size=BATCH_SIZE,
+    )
+    directory = f"adv_examples_kan_cw/eps_1.0_alpha_0.01_iters_1000"
     save_adv_examples(adv_examples, directory, max_examples=max_examples)
     save_results(final_acc, epsilon, alpha, iters, directory)
+
+    logger.info("Finished Evaluation")
