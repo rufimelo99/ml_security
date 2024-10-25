@@ -89,16 +89,16 @@ def test_l2_attack(model, test_loader, epsilon, alpha, iters):
         final_pred = output.max(1, keepdim=True)[
             1
         ]  # Get the index of the max log-probability
-        # Check if the adversarial image was classified correctly
-        if final_pred.item() == target.item():
-            correct += 1
+        correct += final_pred.eq(target.view_as(final_pred)).sum().item()
 
-        # if we create a successful adversarial example, save it
-        if final_pred.item() != target.item():
-            adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
-            adv_examples.append((target, final_pred.item(), adv_ex))
+        # get the adversarial examples when it is misclassified
+        adv_idxs = final_pred.ne(target.view_as(final_pred)).view(-1)
+        for i in range(len(adv_idxs)):
+            if not adv_idxs[i]:
+                adv_ex = perturbed_data[i].squeeze().detach().cpu().numpy()
+                adv_examples.append((target[i], final_pred[i].item(), adv_ex))
 
-    final_acc = correct / float(len(test_loader))
+    final_acc = correct / ( float(len(test_loader)) * BATCH_SIZE )
     print(f"Test Accuracy = {final_acc * 100:.2f}%")
     return final_acc, adv_examples
 
@@ -159,8 +159,12 @@ if __name__ == "__main__":
     dataset = DatasetType[args.dataset]
     dataset_info = DATASET_REGISTRY[dataset]
 
+    transform = transforms.Compose(
+        [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+    )
+
     if dataset_info.origin == "TORCHVISION":
-        valloader = create_dataloader(dataset=dataset, batch_size=64, train=False)
+        valloader = create_dataloader(dataset=dataset, batch_size=64, train=False, transformation=transform)
     else:
         raise ValueError("Unknown dataset origin or Unsupported for this experiment.")
 
@@ -174,16 +178,13 @@ if __name__ == "__main__":
     )
     model.to(DEVICE)
 
-    transform = transforms.Compose(
-        [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
-    )
 
     final_acc, adv_examples = test_l2_attack(model, valloader, epsilon, alpha, iters)
     save_adv_examples(adv_examples, "adv_examples", max_examples=5)
     save_results(final_acc, epsilon, alpha, iters, "adv_examples/")
 
     model = CIFARCNNKAN()
-    model.load_state_dict(torch.load("cnn/CIFAR10/kan_cnn.pth"))
+    model.load_state_dict(torch.load("ml_security/adaptative_network/eval/cnn/CIFAR10/kan_cnn.pth"))
     model.to(DEVICE)
 
     final_acc, adv_examples = test_l2_attack(model, valloader, epsilon, alpha, iters)

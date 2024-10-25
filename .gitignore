@@ -192,3 +192,5 @@ ml_security/.DS_Store
 
 # Ignore model directories
 /ml_security/ml_security/adaptative_network/model
+/ml_security/adv_examples
+/ml_security/adv_examples_kan

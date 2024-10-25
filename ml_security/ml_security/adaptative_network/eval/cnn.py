@@ -12,7 +12,6 @@ from ml_security.adaptative_network.eval.utils import (
     CIFARCNNKAN,
     CNN,
     CNNKAN,
-    PreActResNet18,
     plot_results,
     save_results,
 )
