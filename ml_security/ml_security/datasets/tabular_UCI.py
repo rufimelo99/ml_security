@@ -13,16 +13,6 @@ from torch.utils.data import TensorDataset
 
 from ml_security.logger import logger
 
-try:
-    from ucimlrepo import fetch_ucirepo
-except ImportError:
-    logger.error(
-        'ucimlrepo not installed. Please install it by running "pip install ucimlrepo"'
-    )
-    raise ImportError(
-        'ucimlrepo not installed. Please install it by running "pip install ucimlrepo"'
-    )
-
 
 def process_x(df):
     float_cols = [col for col in df.columns if df[col].dtype == "float64"]
@@ -130,6 +120,15 @@ def split_dataset(dataset, split_ratio: float = 0.8):
 
 
 def from_uciml_to_dataset(uci_id: int, split_ratio: float):
+    try:
+        from ucimlrepo import fetch_ucirepo
+    except ImportError:
+        logger.error(
+            'ucimlrepo not installed. Please install it by running "pip install ucimlrepo"'
+        )
+        raise ImportError(
+            'ucimlrepo not installed. Please install it by running "pip install ucimlrepo"'
+        )
     ucimldataset = fetch_ucirepo(id=uci_id)
 
     x = ucimldataset.data.features
