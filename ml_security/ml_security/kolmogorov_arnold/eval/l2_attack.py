@@ -139,9 +139,7 @@ if __name__ == "__main__":
         type=str,
         default="CIFAR10",
         choices=[
-            "MNIST",
             "CIFAR10",
-            "FASHION_MNIST",
         ],
     )
     args = parser.parse_args()
@@ -155,6 +153,7 @@ if __name__ == "__main__":
             batch_size=64,
             train=False,
             transformation=DEFAULT_TRANSFORM_3CH,
+            max_samples=100,
         )
     else:
         raise ValueError("Unknown dataset origin or Unsupported for this experiment.")
