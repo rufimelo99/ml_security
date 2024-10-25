@@ -89,7 +89,7 @@ def test_l2_attack(model, test_loader, epsilon, alpha, iters):
                 adv_examples.append((target[i], final_pred[i].item(), adv_ex))
 
     final_acc = correct / (float(len(test_loader)) * BATCH_SIZE)
-    print(f"Test Accuracy = {final_acc * 100:.2f}%")
+    logger.info("Final Accuracy", final_acc=final_acc)
     return final_acc, adv_examples
 
 
