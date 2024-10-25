@@ -1,6 +1,9 @@
 # ml_security
 PhD work and exploration @ FEUP 2024-2029
 
+[![PyPi Version](https://img.shields.io/pypi/v/ml_security)](https://pypi.org/project/ml_security/)
+[![Downloads](https://static.pepy.tech/badge/ml_security)](https://pepy.tech/project/ml_security)
+
 
 ## Installation
 
