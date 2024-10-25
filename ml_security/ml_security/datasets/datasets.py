@@ -93,6 +93,13 @@ DEFAULT_TRANSFORM = transforms.Compose(
     ]
 )
 
+DEFAULT_TRANSFORM_3CH = transforms.Compose(
+    [
+        transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+    ]
+)
+
 
 def create_cv_dataloader(
     dataset: DatasetType = DatasetType.MNIST,

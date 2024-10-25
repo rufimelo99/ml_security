@@ -8,8 +8,6 @@ from torchvision import transforms
 from tqdm import tqdm
 
 from ml_security.adaptative_network.eval.utils import (
-    CIFARCNN,
-    CIFARCNNKAN,
     CNN,
     CNNKAN,
     plot_results,
@@ -101,7 +99,7 @@ if __name__ == "__main__":
     else:
         raise ValueError("Unknown dataset origin.")
 
-    classic_cnn = CIFARCNN()
+    classic_cnn = CNN()
     classic_cnn.to(DEVICE)
     optimizer = optim.AdamW(classic_cnn.parameters(), lr=LR, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.8)
@@ -121,7 +119,7 @@ if __name__ == "__main__":
         classic_cnn_val_losses.append(loss)
         classic_cnn_val_accuracies.append(acc)
 
-    kan_cnn = CIFARCNNKAN()
+    kan_cnn = CNNKAN()
     kan_cnn.to(DEVICE)
     optimizer = optim.AdamW(kan_cnn.parameters(), lr=LR, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.8)

@@ -236,59 +236,6 @@ class LinearNet(torch.nn.Module):
         return x
 
 
-import torch.nn as nn
-
-
-class CNNKAN(nn.Module):
-    def __init__(self):
-        super(CNNKAN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
-        self.pool1 = nn.MaxPool2d(2)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
-        self.pool2 = nn.MaxPool2d(2)
-        self.kan1 = HybridLinearKAN(64 * 8 * 8, 256)
-        self.kan2 = HybridLinearKAN(256, 10)
-
-    def forward(self, x):
-        x = F.selu(self.conv1(x))
-        x = self.pool1(x)
-        x = F.selu(self.conv2(x))
-        x = self.pool2(x)
-        x = x.view(x.size(0), -1)
-        x = self.kan1(x)
-        x = self.kan2(x)
-        return x
-
-
-class CNN(nn.Module):
-    def __init__(self):
-        super(CNN, self).__init__()
-        # Convolutional layers
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
-        self.pool1 = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
-        self.pool2 = nn.MaxPool2d(2, 2)
-
-        # Fully connected layers
-        self.fc1 = nn.Linear(64 * 8 * 8, 256)
-        self.fc2 = nn.Linear(256, 10)  # Final output layer
-
-    def forward(self, x):
-        # Convolutional layers
-        x = F.selu(self.conv1(x))
-        x = self.pool1(x)
-        x = F.selu(self.conv2(x))
-        x = self.pool2(x)
-
-        # Flattening the layer for the fully connected layer
-        x = x.view(x.size(0), -1)
-
-        # Fully connected layers
-        x = F.selu(self.fc1(x))
-        x = self.fc2(x)
-
-        return x
-
 
 class OriginalKANLinear(torch.nn.Module):
     def __init__(
@@ -528,164 +475,9 @@ class OriginalKANLinear(torch.nn.Module):
         )
 
 
-# implement PreAct ResNet-18
-# https://github.com/kuangliu/pytorch-cifar/blob/master/models/preact_resnet.py
-"""Pre-activation ResNet in PyTorch.
-
-Reference:
-[1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
-    Identity Mappings in Deep Residual Networks. arXiv:1603.05027
-"""
-
-
-class PreActBlock(nn.Module):
-    """Pre-activation version of the BasicBlock."""
-
-    expansion = 1
-
-    def __init__(self, in_planes, planes, stride=1):
-        super(PreActBlock, self).__init__()
-        self.bn1 = nn.BatchNorm2d(in_planes)
-        self.conv1 = nn.Conv2d(
-            in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False
-        )
-        self.bn2 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(
-            planes, planes, kernel_size=3, stride=1, padding=1, bias=False
-        )
-
-        if stride != 1 or in_planes != self.expansion * planes:
-            self.shortcut = nn.Sequential(
-                nn.Conv2d(
-                    in_planes,
-                    self.expansion * planes,
-                    kernel_size=1,
-                    stride=stride,
-                    bias=False,
-                )
-            )
-
-    def forward(self, x):
-        out = F.relu(self.bn1(x))
-        shortcut = self.shortcut(out) if hasattr(self, "shortcut") else x
-        out = self.conv1(out)
-        out = self.conv2(F.relu(self.bn2(out)))
-        out += shortcut
-        return out
-
-
-class PreActBottleneck(nn.Module):
-    """Pre-activation version of the original Bottleneck module."""
-
-    expansion = 4
-
-    def __init__(self, in_planes, planes, stride=1):
-        super(PreActBottleneck, self).__init__()
-        self.bn1 = nn.BatchNorm2d(in_planes)
-        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(
-            planes, planes, kernel_size=3, stride=stride, padding=1, bias=False
-        )
-        self.bn3 = nn.BatchNorm2d(planes)
-        self.conv3 = nn.Conv2d(
-            planes, self.expansion * planes, kernel_size=1, bias=False
-        )
-
-        if stride != 1 or in_planes != self.expansion * planes:
-            self.shortcut = nn.Sequential(
-                nn.Conv2d(
-                    in_planes,
-                    self.expansion * planes,
-                    kernel_size=1,
-                    stride=stride,
-                    bias=False,
-                )
-            )
-
-    def forward(self, x):
-        out = F.relu(self.bn1(x))
-        shortcut = self.shortcut(out) if hasattr(self, "shortcut") else x
-        out = self.conv1(out)
-        out = self.conv2(F.relu(self.bn2(out)))
-        out = self.conv3(F.relu(self.bn3(out)))
-        out += shortcut
-        return out
-
-
-class PreActResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10):
-        super(PreActResNet, self).__init__()
-        self.in_planes = 64
-
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
-        self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
-        self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
-        self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
-        self.linear = nn.Linear(512 * block.expansion, num_classes)
-
-    def _make_layer(self, block, planes, num_blocks, stride):
-        strides = [stride] + [1] * (num_blocks - 1)
-        layers = []
-        for stride in strides:
-            layers.append(block(self.in_planes, planes, stride))
-            self.in_planes = planes * block.expansion
-        return nn.Sequential(*layers)
-
-    def forward(self, x):
-        out = self.conv1(x)
-        out = self.layer1(out)
-        out = self.layer2(out)
-        out = self.layer3(out)
-        out = self.layer4(out)
-        out = F.avg_pool2d(out, 4)
-        out = out.view(out.size(0), -1)
-        out = self.linear(out)
-        return out
-
-
-class PreActResNetwithKAN(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10):
-        super(PreActResNetwithKAN, self).__init__()
-        self.in_planes = 64
-
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
-        self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
-        self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
-        self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
-        self.kan_linear = OriginalKANLinear(512 * block.expansion, num_classes)
-
-    def _make_layer(self, block, planes, num_blocks, stride):
-        strides = [stride] + [1] * (num_blocks - 1)
-        layers = []
-        for stride in strides:
-            layers.append(block(self.in_planes, planes, stride))
-            self.in_planes = planes * block.expansion
-        return nn.Sequential(*layers)
-
-    def forward(self, x):
-        out = self.conv1(x)
-        out = self.layer1(out)
-        out = self.layer2(out)
-        out = self.layer3(out)
-        out = self.layer4(out)
-        out = F.avg_pool2d(out, 4)
-        out = out.view(out.size(0), -1)
-        out = self.kan_linear(out)
-        return out
-
-
-def PreActResNet18(kan_version=False):
-    if kan_version:
-        return PreActResNetwithKAN(PreActBlock, [2, 2, 2, 2])
-    return PreActResNet(PreActBlock, [2, 2, 2, 2])
-
-
-class CIFARCNN(nn.Module):
+class CNN(nn.Module):
     def __init__(self):
-        super(CIFARCNN, self).__init__()
+        super(CNN, self).__init__()
 
         # Define the layers
         self.conv1 = nn.Conv2d(
@@ -759,9 +551,9 @@ class CIFARCNN(nn.Module):
         return x
 
 
-class CIFARCNNKAN(nn.Module):
+class CNNKAN(nn.Module):
     def __init__(self):
-        super(CIFARCNNKAN, self).__init__()
+        super(CNNKAN, self).__init__()
 
         # Define the layers
         self.conv1 = nn.Conv2d(

@@ -1,42 +1,32 @@
-# I have a cnn model that I trained on the CIFAR10 dataset.
-# I want to see how robust it is to adversarial attacks.
-
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from torchvision import transforms
 from tqdm import tqdm
 
 from ml_security.adaptative_network.eval.utils import (
-    CIFARCNN,
-    CIFARCNNKAN,
-    PreActBlock,
-    PreActResNet,
-    PreActResNetwithKAN,
+    CNN,
+    CNNKAN,
 )
 from ml_security.attacks.membership_inference_attack import create_attack_dataloader
 from ml_security.datasets.datasets import (
     DATASET_REGISTRY,
     DatasetType,
     create_dataloader,
+    DEFAULT_TRANSFORM_3CH,
 )
 from ml_security.logger import logger
 from ml_security.utils.utils import get_device, set_seed
 
-# Set the seed
 set_seed(42)
 DEVICE = get_device()
 BATCH_SIZE = 64
 
 
 model_path = "ml_security/adaptative_network/eval/cnn/CIFAR10/classic_cnn.pth"
-
-# Load the model
-# model = PreActResNet(PreActBlock, [2, 2, 2, 2])
-model = CIFARCNN()
+model = CNN()
 model.load_state_dict(torch.load(model_path))
 model.to(DEVICE)
 model.eval()
@@ -46,25 +36,19 @@ dataset = "CIFAR10"
 dataset = DatasetType[dataset]
 dataset_info = DATASET_REGISTRY[dataset]
 
-transform = transforms.Compose(
-    [
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
-    ]
-)
 if dataset_info.origin == "TORCHVISION":
     trainloader = create_dataloader(
         dataset=dataset,
         batch_size=BATCH_SIZE,
         train=True,
-        transformation=transform,
+        transformation=DEFAULT_TRANSFORM_3CH,
         max_samples=10000,
     )
     valloader = create_dataloader(
         dataset=dataset,
         batch_size=BATCH_SIZE,
         train=False,
-        transformation=transform,
+        transformation=DEFAULT_TRANSFORM_3CH,
         max_samples=10000,
     )
 else:
