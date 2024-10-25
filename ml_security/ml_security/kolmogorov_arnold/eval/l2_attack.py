@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, models, transforms
 from tqdm import tqdm
 
-from ml_security.adaptative_network.eval.utils import (
+from ml_security.kolmogorov_arnold.eval.utils import (
     CIFARCNN,
     CIFARCNNKAN,
     PreActBlock,
@@ -174,7 +174,7 @@ if __name__ == "__main__":
 
     model = CIFARCNN()
     model.load_state_dict(
-        torch.load("ml_security/adaptative_network/eval/cnn/CIFAR10/classic_cnn.pth")
+        torch.load("ml_security/kolmogorov_arnold/eval/cnn/CIFAR10/classic_cnn.pth")
     )
     model.to(DEVICE)
 
@@ -184,7 +184,7 @@ if __name__ == "__main__":
     save_results(final_acc, epsilon, alpha, iters, "adv_examples/")
 
     model = CIFARCNNKAN()
-    model.load_state_dict(torch.load("ml_security/adaptative_network/eval/cnn/CIFAR10/kan_cnn.pth"))
+    model.load_state_dict(torch.load("ml_security/kolmogorov_arnold/eval/cnn/CIFAR10/kan_cnn.pth"))
     model.to(DEVICE)
 
     final_acc, adv_examples = test_l2_attack(model, valloader, epsilon, alpha, iters)

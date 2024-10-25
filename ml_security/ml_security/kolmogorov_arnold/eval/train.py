@@ -7,7 +7,7 @@ import torch.optim as optim
 from torchvision import transforms
 from tqdm import tqdm
 
-from ml_security.adaptative_network.eval.utils import (
+from ml_security.kolmogorov_arnold.eval.utils import (
     CNN,
     CNNKAN,
     plot_results,
@@ -139,7 +139,7 @@ if __name__ == "__main__":
         kan_cnn_val_accuracies.append(acc)
 
     # Save models
-    directory = "ml_security/adaptative_network/eval/cnn/"
+    directory = "ml_security/kolmogorov_arnold/eval/cnn/"
 
     # Create repo for experience dataset
     dataset_dir = directory + args.dataset + "/"

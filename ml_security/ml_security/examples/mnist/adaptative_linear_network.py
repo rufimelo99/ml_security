@@ -6,14 +6,14 @@ import torch.nn.functional as F
 import torch.optim as optim
 from tqdm import tqdm
 
-from ml_security.adaptative_network.network import HybridLinearKAN
-from ml_security.datasets.computer_vision import (
-    NUM_CLASSES,
+from ml_security.kolmogorov_arnold.network import HybridLinearKAN
+from ml_security.datasets.datasets import (
+    DATASET_REGISTRY,
     DatasetType,
     create_dataloader,
 )
 from ml_security.logger import logger
-from ml_security.utils import get_device, set_seed
+from ml_security.utils.utils import get_device, set_seed
 
 set_seed(42)
 
@@ -21,11 +21,11 @@ DEVICE = get_device()
 
 
 class Net(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, in_features, n_classes):
         super(Net, self).__init__()
-        self.liner_kan1 = HybridLinearKAN(28 * 28, 100)
+        self.liner_kan1 = HybridLinearKAN(in_features, 100)
         self.linear_1 = torch.nn.Linear(100, 100)
-        self.liner_kan2 = HybridLinearKAN(100, NUM_CLASSES[DatasetType.MNIST])
+        self.liner_kan2 = HybridLinearKAN(100, n_classes)
 
     def forward(self, x):
         x = x.view(-1, 28 * 28)
@@ -42,12 +42,17 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=1)
     args = parser.parse_args()
 
+
+    dataset = DatasetType.MNIST
+    dataset_info = DATASET_REGISTRY[dataset]
+
+
     trainloader = create_dataloader(
-        dataset=DatasetType.MNIST, batch_size=64, train=True
+        dataset=dataset, batch_size=64, train=True
     )
     valloader = create_dataloader(dataset=DatasetType.MNIST, batch_size=64, train=False)
 
-    model = Net()
+    model = Net(dataset_info.input_features, dataset_info.num_classes).to(DEVICE)
 
     model.to(DEVICE)
 
@@ -60,7 +65,7 @@ if __name__ == "__main__":
         model.train()
         with tqdm(trainloader) as pbar:
             for i, (images, labels) in enumerate(pbar):
-                images = images.view(-1, 28 * 28).to(DEVICE)
+                images = images.view(-1, dataset_info.input_features).to(DEVICE)
                 optimizer.zero_grad()
                 output = model(images)
                 loss = criterion(output, labels.to(DEVICE))
@@ -78,7 +83,7 @@ if __name__ == "__main__":
         val_accuracy = 0
         with torch.no_grad():
             for images, labels in valloader:
-                images = images.view(-1, 28 * 28).to(DEVICE)
+                images = images.view(-1, dataset_info.input_features).to(DEVICE)
                 output = model(images)
                 val_loss += criterion(output, labels.to(DEVICE)).item()
                 val_accuracy += (

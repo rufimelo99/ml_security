@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import torch
 
-from ml_security.adaptative_network.network import HybridLinearKAN
+from ml_security.kolmogorov_arnold.network import HybridLinearKAN
 
 
 def test_forward():

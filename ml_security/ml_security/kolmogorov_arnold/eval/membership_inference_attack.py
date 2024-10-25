@@ -6,7 +6,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from ml_security.adaptative_network.eval.utils import (
+from ml_security.kolmogorov_arnold.eval.utils import (
     CNN,
     CNNKAN,
 )
@@ -25,7 +25,7 @@ DEVICE = get_device()
 BATCH_SIZE = 64
 
 
-model_path = "ml_security/adaptative_network/eval/cnn/CIFAR10/classic_cnn.pth"
+model_path = "ml_security/kolmogorov_arnold/eval/cnn/CIFAR10/classic_cnn.pth"
 model = CNN()
 model.load_state_dict(torch.load(model_path))
 model.to(DEVICE)

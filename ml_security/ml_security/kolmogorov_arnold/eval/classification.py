@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from ml_security.adaptative_network.eval.utils import (
+from ml_security.kolmogorov_arnold.eval.utils import (
     HybridNet,
     LinearNet,
     classic_training,
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     )
 
     # Save models
-    directory = "ml_security/adaptative_network/eval/"
+    directory = "ml_security/kolmogorov_arnold/eval/"
 
     # Create repo for experience dataset
     dataset_dir = directory + args.dataset + "/"
