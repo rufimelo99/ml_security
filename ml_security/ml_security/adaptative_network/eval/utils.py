@@ -682,111 +682,154 @@ def PreActResNet18(kan_version=False):
         return PreActResNetwithKAN(PreActBlock, [2, 2, 2, 2])
     return PreActResNet(PreActBlock, [2, 2, 2, 2])
 
+
 class CIFARCNN(nn.Module):
     def __init__(self):
         super(CIFARCNN, self).__init__()
-        
+
         # Define the layers
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, padding=1)  # Conv2D(32, (3, 3), padding='same')
-        self.conv2 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1) # Conv2D(32, (3, 3), padding='same')
-        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)                                # MaxPooling2D(pool_size=(2, 2))
-        
-        self.conv3 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1)  # Conv2D(64, (3, 3), padding='same')
-        self.conv4 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1)  # Conv2D(64, (3, 3), padding='same')
-        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)                                # MaxPooling2D(pool_size=(2, 2))
-        
-        self.conv5 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding=1) # Conv2D(128, (3, 3), padding='same')
-        self.conv6 = nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, padding=1) # Conv2D(128, (3, 3), padding='same')
-        self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2)                                # MaxPooling2D(pool_size=(2, 2))
+        self.conv1 = nn.Conv2d(
+            in_channels=3, out_channels=32, kernel_size=3, padding=1
+        )  # Conv2D(32, (3, 3), padding='same')
+        self.conv2 = nn.Conv2d(
+            in_channels=32, out_channels=32, kernel_size=3, padding=1
+        )  # Conv2D(32, (3, 3), padding='same')
+        self.pool1 = nn.MaxPool2d(
+            kernel_size=2, stride=2
+        )  # MaxPooling2D(pool_size=(2, 2))
+
+        self.conv3 = nn.Conv2d(
+            in_channels=32, out_channels=64, kernel_size=3, padding=1
+        )  # Conv2D(64, (3, 3), padding='same')
+        self.conv4 = nn.Conv2d(
+            in_channels=64, out_channels=64, kernel_size=3, padding=1
+        )  # Conv2D(64, (3, 3), padding='same')
+        self.pool2 = nn.MaxPool2d(
+            kernel_size=2, stride=2
+        )  # MaxPooling2D(pool_size=(2, 2))
+
+        self.conv5 = nn.Conv2d(
+            in_channels=64, out_channels=128, kernel_size=3, padding=1
+        )  # Conv2D(128, (3, 3), padding='same')
+        self.conv6 = nn.Conv2d(
+            in_channels=128, out_channels=128, kernel_size=3, padding=1
+        )  # Conv2D(128, (3, 3), padding='same')
+        self.pool3 = nn.MaxPool2d(
+            kernel_size=2, stride=2
+        )  # MaxPooling2D(pool_size=(2, 2))
 
         # Fully connected layers
-        self.fc1 = nn.Linear(128 * 4 * 4, 1024)                                           # Dense(1024)
-        self.fc2 = nn.Linear(1024, 512)                                                   # Dense(512)
-        self.fc3 = nn.Linear(512, 10)                                                     # Dense(10)
+        self.fc1 = nn.Linear(128 * 4 * 4, 1024)  # Dense(1024)
+        self.fc2 = nn.Linear(1024, 512)  # Dense(512)
+        self.fc3 = nn.Linear(512, 10)  # Dense(10)
 
         # Dropout layer
         self.dropout = nn.Dropout(0.5)
-        
+
         # L2 regularization for Dense layers will be added during the optimizer setup
 
     def forward(self, x):
         # Pass through the convolutional layers
-        x = F.relu(self.conv1(x))        # Conv2D(32, (3, 3)) -> Activation('relu')
-        x = F.relu(self.conv2(x))        # Conv2D(32, (3, 3)) -> Activation('relu')
-        x = self.pool1(x)                # MaxPooling2D(pool_size=(2, 2))
-        
-        x = F.relu(self.conv3(x))        # Conv2D(64, (3, 3)) -> Activation('relu')
-        x = F.relu(self.conv4(x))        # Conv2D(64, (3, 3)) -> Activation('relu')
-        x = self.pool2(x)                # MaxPooling2D(pool_size=(2, 2))
+        x = F.relu(self.conv1(x))  # Conv2D(32, (3, 3)) -> Activation('relu')
+        x = F.relu(self.conv2(x))  # Conv2D(32, (3, 3)) -> Activation('relu')
+        x = self.pool1(x)  # MaxPooling2D(pool_size=(2, 2))
 
-        x = F.relu(self.conv5(x))        # Conv2D(128, (3, 3)) -> Activation('relu')
-        x = F.relu(self.conv6(x))        # Conv2D(128, (3, 3)) -> Activation('relu')
-        x = self.pool3(x)                # MaxPooling2D(pool_size=(2, 2))
+        x = F.relu(self.conv3(x))  # Conv2D(64, (3, 3)) -> Activation('relu')
+        x = F.relu(self.conv4(x))  # Conv2D(64, (3, 3)) -> Activation('relu')
+        x = self.pool2(x)  # MaxPooling2D(pool_size=(2, 2))
+
+        x = F.relu(self.conv5(x))  # Conv2D(128, (3, 3)) -> Activation('relu')
+        x = F.relu(self.conv6(x))  # Conv2D(128, (3, 3)) -> Activation('relu')
+        x = self.pool3(x)  # MaxPooling2D(pool_size=(2, 2))
 
         # Flatten the output
-        x = x.view(-1, 128 * 4 * 4)      # Flatten()
+        x = x.view(-1, 128 * 4 * 4)  # Flatten()
 
         # Pass through the fully connected layers
-        x = self.dropout(F.relu(self.fc1(x)))    # Dense(1024) -> Dropout -> Activation('relu')
-        x = self.dropout(F.relu(self.fc2(x)))    # Dense(512) -> Dropout -> Activation('relu')
-        
+        x = self.dropout(
+            F.relu(self.fc1(x))
+        )  # Dense(1024) -> Dropout -> Activation('relu')
+        x = self.dropout(
+            F.relu(self.fc2(x))
+        )  # Dense(512) -> Dropout -> Activation('relu')
+
         # Final output layer (no activation since it's used with CrossEntropyLoss)
-        x = self.fc3(x)                   # Dense(10)
-        
+        x = self.fc3(x)  # Dense(10)
+
         return x
-    
-    
+
+
 class CIFARCNNKAN(nn.Module):
     def __init__(self):
         super(CIFARCNNKAN, self).__init__()
-        
+
         # Define the layers
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, padding=1)  # Conv2D(32, (3, 3), padding='same')
-        self.conv2 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1) # Conv2D(32, (3, 3), padding='same')
-        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)                                # MaxPooling2D(pool_size=(2, 2))
-        
-        self.conv3 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1)  # Conv2D(64, (3, 3), padding='same')
-        self.conv4 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1)  # Conv2D(64, (3, 3), padding='same')
-        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)                                # MaxPooling2D(pool_size=(2, 2))
-        
-        self.conv5 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding=1) # Conv2D(128, (3, 3), padding='same')
-        self.conv6 = nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, padding=1) # Conv2D(128, (3, 3), padding='same')
-        self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2)                                # MaxPooling2D(pool_size=(2, 2))
+        self.conv1 = nn.Conv2d(
+            in_channels=3, out_channels=32, kernel_size=3, padding=1
+        )  # Conv2D(32, (3, 3), padding='same')
+        self.conv2 = nn.Conv2d(
+            in_channels=32, out_channels=32, kernel_size=3, padding=1
+        )  # Conv2D(32, (3, 3), padding='same')
+        self.pool1 = nn.MaxPool2d(
+            kernel_size=2, stride=2
+        )  # MaxPooling2D(pool_size=(2, 2))
+
+        self.conv3 = nn.Conv2d(
+            in_channels=32, out_channels=64, kernel_size=3, padding=1
+        )  # Conv2D(64, (3, 3), padding='same')
+        self.conv4 = nn.Conv2d(
+            in_channels=64, out_channels=64, kernel_size=3, padding=1
+        )  # Conv2D(64, (3, 3), padding='same')
+        self.pool2 = nn.MaxPool2d(
+            kernel_size=2, stride=2
+        )  # MaxPooling2D(pool_size=(2, 2))
+
+        self.conv5 = nn.Conv2d(
+            in_channels=64, out_channels=128, kernel_size=3, padding=1
+        )  # Conv2D(128, (3, 3), padding='same')
+        self.conv6 = nn.Conv2d(
+            in_channels=128, out_channels=128, kernel_size=3, padding=1
+        )  # Conv2D(128, (3, 3), padding='same')
+        self.pool3 = nn.MaxPool2d(
+            kernel_size=2, stride=2
+        )  # MaxPooling2D(pool_size=(2, 2))
 
         # Fully connected layers
         self.kan_linear1 = OriginalKANLinear(128 * 4 * 4, 1024)
         self.kan_linear2 = OriginalKANLinear(1024, 512)
-        self.kan_linear3 = OriginalKANLinear(512, 10)                                          # Dense(10)
+        self.kan_linear3 = OriginalKANLinear(512, 10)  # Dense(10)
 
         # Dropout layer
         self.dropout = nn.Dropout(0.5)
-        
+
         # L2 regularization for Dense layers will be added during the optimizer setup
 
     def forward(self, x):
         # Pass through the convolutional layers
-        x = F.relu(self.conv1(x))        # Conv2D(32, (3, 3)) -> Activation('relu')
-        x = F.relu(self.conv2(x))        # Conv2D(32, (3, 3)) -> Activation('relu')
-        x = self.pool1(x)                # MaxPooling2D(pool_size=(2, 2))
-        
-        x = F.relu(self.conv3(x))        # Conv2D(64, (3, 3)) -> Activation('relu')
-        x = F.relu(self.conv4(x))        # Conv2D(64, (3, 3)) -> Activation('relu')
-        x = self.pool2(x)                # MaxPooling2D(pool_size=(2, 2))
+        x = F.relu(self.conv1(x))  # Conv2D(32, (3, 3)) -> Activation('relu')
+        x = F.relu(self.conv2(x))  # Conv2D(32, (3, 3)) -> Activation('relu')
+        x = self.pool1(x)  # MaxPooling2D(pool_size=(2, 2))
 
-        x = F.relu(self.conv5(x))        # Conv2D(128, (3, 3)) -> Activation('relu')
-        x = F.relu(self.conv6(x))        # Conv2D(128, (3, 3)) -> Activation('relu')
-        x = self.pool3(x)                # MaxPooling2D(pool_size=(2, 2))
+        x = F.relu(self.conv3(x))  # Conv2D(64, (3, 3)) -> Activation('relu')
+        x = F.relu(self.conv4(x))  # Conv2D(64, (3, 3)) -> Activation('relu')
+        x = self.pool2(x)  # MaxPooling2D(pool_size=(2, 2))
+
+        x = F.relu(self.conv5(x))  # Conv2D(128, (3, 3)) -> Activation('relu')
+        x = F.relu(self.conv6(x))  # Conv2D(128, (3, 3)) -> Activation('relu')
+        x = self.pool3(x)  # MaxPooling2D(pool_size=(2, 2))
 
         # Flatten the output
-        x = x.view(-1, 128 * 4 * 4)      # Flatten()
+        x = x.view(-1, 128 * 4 * 4)  # Flatten()
 
         # Pass through the fully connected layers
-        x = self.dropout(self.kan_linear1(x))   # Dense(1024) -> Dropout -> Activation('relu')
-        x = self.dropout(self.kan_linear2(x))   # Dense(512) -> Dropout -> Activation('relu')
-        
+        x = self.dropout(
+            self.kan_linear1(x)
+        )  # Dense(1024) -> Dropout -> Activation('relu')
+        x = self.dropout(
+            self.kan_linear2(x)
+        )  # Dense(512) -> Dropout -> Activation('relu')
+
         # Final output layer (no activation since it's used with CrossEntropyLoss)
-        x = self.kan_linear3(x)                   # Dense(10)
-        
+        x = self.kan_linear3(x)  # Dense(10)
+
         return x
-    
-    

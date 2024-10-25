@@ -11,11 +11,11 @@ from torchvision import transforms
 from tqdm import tqdm
 
 from ml_security.adaptative_network.eval.utils import (
+    CIFARCNN,
+    CIFARCNNKAN,
     PreActBlock,
     PreActResNet,
     PreActResNetwithKAN,
-    CIFARCNNKAN,
-    CIFARCNN,
 )
 from ml_security.attacks.membership_inference_attack import create_attack_dataloader
 from ml_security.datasets.datasets import (
@@ -54,14 +54,21 @@ transform = transforms.Compose(
 )
 if dataset_info.origin == "TORCHVISION":
     trainloader = create_dataloader(
-        dataset=dataset, batch_size=BATCH_SIZE, train=True, transformation=transform, max_samples=10000
+        dataset=dataset,
+        batch_size=BATCH_SIZE,
+        train=True,
+        transformation=transform,
+        max_samples=10000,
     )
     valloader = create_dataloader(
-        dataset=dataset, batch_size=BATCH_SIZE, train=False, transformation=transform, max_samples=10000
+        dataset=dataset,
+        batch_size=BATCH_SIZE,
+        train=False,
+        transformation=transform,
+        max_samples=10000,
     )
 else:
     raise ValueError("Unknown dataset origin.")
-
 
 
 @torch.no_grad()
@@ -85,11 +92,9 @@ def get_confidence_scores(
         batch_data, batch_target = batch_data.to(device), batch_target.to(device)
         output = model(batch_data)
         confidence_scores.append(F.softmax(output, dim=1).cpu().numpy())
-    
+
     # Returns the confidence scores -> Shape: (n_samples, n_classes)
     return np.concatenate(confidence_scores)
-
-
 
 
 attack_loader, attack_labels = create_attack_dataloader(
@@ -97,7 +102,7 @@ attack_loader, attack_labels = create_attack_dataloader(
     holdout_loader=valloader,
     model=model,
     device=DEVICE,
-    get_confidence_scores=get_confidence_scores
+    get_confidence_scores=get_confidence_scores,
 )
 
 
@@ -112,7 +117,7 @@ class AttackModel(nn.Module):
         x = F.relu(self.fc1(x))
         x = torch.sigmoid(self.fc2(x))
         return x.squeeze(1)
-    
+
 
 attack_model = AttackModel().to(DEVICE)
 criterion = nn.BCELoss()
