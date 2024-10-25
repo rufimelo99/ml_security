@@ -18,7 +18,7 @@ from ml_security.datasets.datasets import (
     create_dataloader,
 )
 from ml_security.logger import logger
-from ml_security.utils import get_device, set_seed
+from ml_security.utils.utils import get_device, set_seed
 
 set_seed(42)
 DEVICE = get_device()
