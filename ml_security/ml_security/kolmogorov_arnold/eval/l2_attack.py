@@ -93,6 +93,10 @@ def test_l2_attack(model, test_loader, epsilon, alpha, iters):
     return final_acc, adv_examples
 
 
+def get_str_parameters(epsilon, alpha, iters):
+    return f"eps_{epsilon}_alpha_{alpha}_iters_{iters}"
+
+
 def save_adv_examples(adv_examples, directory, max_examples=math.inf):
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -142,6 +146,9 @@ if __name__ == "__main__":
             "CIFAR10",
         ],
     )
+    parser.add_argument(
+        "--max_sample", type=int, default=20, help="Number of adv samples to save"
+    )
     args = parser.parse_args()
 
     dataset = DatasetType[args.dataset]
@@ -161,6 +168,7 @@ if __name__ == "__main__":
     epsilon = args.epsilon
     alpha = args.alpha
     iters = args.iters
+    max_examples = args.max_sample
 
     model = CNN()
     model.load_state_dict(
@@ -169,8 +177,9 @@ if __name__ == "__main__":
     model.to(DEVICE)
 
     final_acc, adv_examples = test_l2_attack(model, valloader, epsilon, alpha, iters)
-    save_adv_examples(adv_examples, "adv_examples", max_examples=5)
-    save_results(final_acc, epsilon, alpha, iters, "adv_examples/")
+    directory = f"adv_examples/{get_str_parameters(epsilon, alpha, iters)}"
+    save_adv_examples(adv_examples, directory, max_examples=max_examples)
+    save_results(final_acc, epsilon, alpha, iters, directory)
 
     model = CNNKAN()
     model.load_state_dict(
@@ -179,5 +188,6 @@ if __name__ == "__main__":
     model.to(DEVICE)
 
     final_acc, adv_examples = test_l2_attack(model, valloader, epsilon, alpha, iters)
-    save_adv_examples(adv_examples, "adv_examples_kan", max_examples=5)
-    save_results(final_acc, epsilon, alpha, iters, "adv_examples_kan/")
+    directory = f"adv_examples_kan/{get_str_parameters(epsilon, alpha, iters)}"
+    save_adv_examples(adv_examples, directory, max_examples=max_examples)
+    save_results(final_acc, epsilon, alpha, iters, directory)
