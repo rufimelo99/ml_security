@@ -6,26 +6,16 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
-from torch.utils.data import DataLoader
-from torchvision import datasets, models, transforms
 from tqdm import tqdm
 
-from ml_security.kolmogorov_arnold.eval.utils import (
-    CIFARCNN,
-    CIFARCNNKAN,
-    PreActBlock,
-    PreActResNet,
-    PreActResNetwithKAN,
-)
-from ml_security.attacks.membership_inference_attack import create_attack_dataloader
 from ml_security.datasets.datasets import (
     DATASET_REGISTRY,
+    DEFAULT_TRANSFORM_3CH,
     DatasetType,
     create_dataloader,
 )
+from ml_security.kolmogorov_arnold.eval.utils import CNN, CNNKAN
 from ml_security.logger import logger
 from ml_security.utils.utils import get_device, set_seed
 
@@ -98,7 +88,7 @@ def test_l2_attack(model, test_loader, epsilon, alpha, iters):
                 adv_ex = perturbed_data[i].squeeze().detach().cpu().numpy()
                 adv_examples.append((target[i], final_pred[i].item(), adv_ex))
 
-    final_acc = correct / ( float(len(test_loader)) * BATCH_SIZE )
+    final_acc = correct / (float(len(test_loader)) * BATCH_SIZE)
     print(f"Test Accuracy = {final_acc * 100:.2f}%")
     return final_acc, adv_examples
 
@@ -159,12 +149,13 @@ if __name__ == "__main__":
     dataset = DatasetType[args.dataset]
     dataset_info = DATASET_REGISTRY[dataset]
 
-    transform = transforms.Compose(
-        [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
-    )
-
     if dataset_info.origin == "TORCHVISION":
-        valloader = create_dataloader(dataset=dataset, batch_size=64, train=False, transformation=transform)
+        valloader = create_dataloader(
+            dataset=dataset,
+            batch_size=64,
+            train=False,
+            transformation=DEFAULT_TRANSFORM_3CH,
+        )
     else:
         raise ValueError("Unknown dataset origin or Unsupported for this experiment.")
 
@@ -172,19 +163,20 @@ if __name__ == "__main__":
     alpha = args.alpha
     iters = args.iters
 
-    model = CIFARCNN()
+    model = CNN()
     model.load_state_dict(
         torch.load("ml_security/kolmogorov_arnold/eval/cnn/CIFAR10/classic_cnn.pth")
     )
     model.to(DEVICE)
 
-
     final_acc, adv_examples = test_l2_attack(model, valloader, epsilon, alpha, iters)
     save_adv_examples(adv_examples, "adv_examples", max_examples=5)
     save_results(final_acc, epsilon, alpha, iters, "adv_examples/")
 
-    model = CIFARCNNKAN()
-    model.load_state_dict(torch.load("ml_security/kolmogorov_arnold/eval/cnn/CIFAR10/kan_cnn.pth"))
+    model = CNNKAN()
+    model.load_state_dict(
+        torch.load("ml_security/kolmogorov_arnold/eval/cnn/CIFAR10/kan_cnn.pth")
+    )
     model.to(DEVICE)
 
     final_acc, adv_examples = test_l2_attack(model, valloader, epsilon, alpha, iters)

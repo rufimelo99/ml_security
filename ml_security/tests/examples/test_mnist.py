@@ -7,7 +7,7 @@ import torch
 from torchvision import transforms
 
 from ml_security.attacks.membership_inference_attack import create_attack_dataloader
-from ml_security.datasets.computer_vision import DatasetType, create_dataloader
+from ml_security.datasets.datasets import DatasetType, create_dataloader
 from ml_security.examples.mnist.membership_inference_attack import MODEL_PATH, Net
 from ml_security.examples.mnist.model import Net
 

@@ -236,7 +236,6 @@ class LinearNet(torch.nn.Module):
         return x
 
 
-
 class OriginalKANLinear(torch.nn.Module):
     def __init__(
         self,

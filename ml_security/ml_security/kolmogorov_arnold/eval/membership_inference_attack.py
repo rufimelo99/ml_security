@@ -6,17 +6,14 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from ml_security.kolmogorov_arnold.eval.utils import (
-    CNN,
-    CNNKAN,
-)
 from ml_security.attacks.membership_inference_attack import create_attack_dataloader
 from ml_security.datasets.datasets import (
     DATASET_REGISTRY,
+    DEFAULT_TRANSFORM_3CH,
     DatasetType,
     create_dataloader,
-    DEFAULT_TRANSFORM_3CH,
 )
+from ml_security.kolmogorov_arnold.eval.utils import CNN, CNNKAN
 from ml_security.logger import logger
 from ml_security.utils.utils import get_device, set_seed
 

@@ -6,12 +6,12 @@ import torch.nn.functional as F
 import torch.optim as optim
 from tqdm import tqdm
 
-from ml_security.kolmogorov_arnold.network import HybridLinearKAN
 from ml_security.datasets.datasets import (
     DATASET_REGISTRY,
     DatasetType,
     create_dataloader,
 )
+from ml_security.kolmogorov_arnold.network import HybridLinearKAN
 from ml_security.logger import logger
 from ml_security.utils.utils import get_device, set_seed
 
@@ -42,14 +42,10 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=1)
     args = parser.parse_args()
 
-
     dataset = DatasetType.MNIST
     dataset_info = DATASET_REGISTRY[dataset]
 
-
-    trainloader = create_dataloader(
-        dataset=dataset, batch_size=64, train=True
-    )
+    trainloader = create_dataloader(dataset=dataset, batch_size=64, train=True)
     valloader = create_dataloader(dataset=DatasetType.MNIST, batch_size=64, train=False)
 
     model = Net(dataset_info.input_features, dataset_info.num_classes).to(DEVICE)
