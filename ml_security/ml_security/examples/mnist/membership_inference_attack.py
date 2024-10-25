@@ -7,7 +7,7 @@ from torchvision import transforms
 from tqdm import tqdm
 
 from ml_security.attacks.membership_inference_attack import create_attack_dataloader
-from ml_security.datasets.computer_vision import DatasetType, create_dataloader
+from ml_security.datasets.datasets import DatasetType, create_dataloader
 from ml_security.examples.mnist.model import Net
 from ml_security.logger import logger
 from ml_security.utils.utils import get_device, set_seed

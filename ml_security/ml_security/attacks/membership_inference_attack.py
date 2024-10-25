@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
 
+@torch.no_grad()
 def get_confidence_scores(
     model, data_loader: DataLoader, device: torch.device
 ) -> np.ndarray:
@@ -22,12 +23,12 @@ def get_confidence_scores(
     Returns:
         np.ndarray: The confidence scores.
     """
+    model.eval()
     confidence_scores = []
-    with torch.no_grad():
-        for data, target in tqdm(data_loader):
-            data, target = data.to(device), target.to(device)
-            output = model(data)
-            confidence_scores.append(F.softmax(output, dim=1)[:, 1].cpu().numpy())
+    for data, target in tqdm(data_loader):
+        data, target = data.to(device), target.to(device)
+        output = model(data)
+        confidence_scores.append(F.softmax(output, dim=1)[:, 1].cpu().numpy())
     return np.concatenate(confidence_scores)
 
 
@@ -39,6 +40,7 @@ def create_attack_dataloader(
     get_confidence_scores: Callable[
         [torch.nn.Module, DataLoader, torch.device], np.ndarray
     ] = get_confidence_scores,
+    batch_size: int = 64,
 ) -> Union[DataLoader, np.ndarray]:
     """
     Create the DataLoader for the attack model.
@@ -72,6 +74,6 @@ def create_attack_dataloader(
     attack_dataset = TensorDataset(
         torch.Tensor(attack_data), torch.Tensor(attack_labels)
     )
-    attack_loader = DataLoader(attack_dataset, batch_size=4, shuffle=True)
+    attack_loader = DataLoader(attack_dataset, batch_size=batch_size, shuffle=True)
 
     return attack_loader, attack_labels

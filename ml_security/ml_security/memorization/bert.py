@@ -267,7 +267,6 @@ if __name__ == "__main__":
     for n_sample in tqdm(range(n_samples)):
         random_idx = np.random.randint(len(ds_book_corpus))
         random_entry = ds_book_corpus[random_idx]["text"]
-        print(random_entry)
         tokens = tokenizer.tokenize(random_entry)[:5]
         tokens_str = "[CLS]".split()
         tokens_str.extend(tokens)

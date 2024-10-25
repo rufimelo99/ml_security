@@ -5,20 +5,20 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from ml_security.adaptative_network.eval.utils import (
+from ml_security.datasets.datasets import (
+    DATASET_REGISTRY,
+    DatasetType,
+    create_dataloader,
+)
+from ml_security.kolmogorov_arnold.eval.utils import (
     HybridNet,
     LinearNet,
     classic_training,
     plot_results,
     save_results,
 )
-from ml_security.datasets.datasets import (
-    DATASET_REGISTRY,
-    DatasetType,
-    create_dataloader,
-)
 from ml_security.logger import logger
-from ml_security.utils import get_device, set_seed
+from ml_security.utils.utils import get_device, set_seed
 
 set_seed(42)
 DEVICE = get_device()
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     )
 
     # Save models
-    directory = "ml_security/adaptative_network/eval/"
+    directory = "ml_security/kolmogorov_arnold/eval/"
 
     # Create repo for experience dataset
     dataset_dir = directory + args.dataset + "/"
