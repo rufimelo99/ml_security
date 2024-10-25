@@ -14,10 +14,8 @@ class DistanceMetricType(Enum):
 
 
 class DistanceMetric(ABC):
-    @classmethod
-    def distance(
-        cls, x: torch.Tensor, y: Optional[torch.Tensor] = None
-    ) -> torch.Tensor:
+    @staticmethod
+    def distance(x: torch.Tensor, y: Optional[torch.Tensor] = None) -> torch.Tensor:
         pass
 
     @classmethod
@@ -30,20 +28,20 @@ class DistanceMetric(ABC):
 
 
 class L1Distance(DistanceMetric):
-    @classmethod
-    def distance(cls, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    @staticmethod
+    def distance(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         return torch.sum(torch.abs(x - y), dim=1)
 
 
 class L2Distance(DistanceMetric):
-    @classmethod
-    def distance(cls, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    @staticmethod
+    def distance(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         return torch.norm(x - y, p=2, dim=1)
 
 
 class LinfDistance(DistanceMetric):
-    @classmethod
-    def distance(cls, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    @staticmethod
+    def distance(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         return torch.max(torch.abs(x - y), dim=1).values
 
 
