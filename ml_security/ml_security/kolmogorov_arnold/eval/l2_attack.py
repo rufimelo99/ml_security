@@ -93,6 +93,21 @@ def test_l2_attack(model, test_loader, epsilon, alpha, iters):
     return final_acc, adv_examples
 
 
+@torch.no_grad()
+def test_original(model, test_loader):
+    correct = 0
+    for data, target in tqdm(test_loader):
+        data, target = data.to(DEVICE), target.to(DEVICE)
+        output = model(data)
+        final_pred = output.max(1, keepdim=True)[
+            1
+        ]  # Get the index of the max log-probability
+        correct += final_pred.eq(target.view_as(final_pred)).sum().item()
+
+    final_acc = correct / (float(len(test_loader)) * BATCH_SIZE)
+    return final_acc
+
+
 def get_str_parameters(epsilon, alpha, iters):
     return f"eps_{epsilon}_alpha_{alpha}_iters_{iters}"
 
@@ -169,22 +184,33 @@ if __name__ == "__main__":
     iters = args.iters
     max_examples = args.max_sample
 
+    ##############
+    logger.info("Evaluating Classic CNN")
     model = CNN()
     model.load_state_dict(
         torch.load("ml_security/kolmogorov_arnold/eval/cnn/CIFAR10/classic_cnn.pth")
     )
     model.to(DEVICE)
 
+    original_acc = test_original(model, valloader)
+    logger.info("Original Accuracy", original_acc=original_acc)
+
     final_acc, adv_examples = test_l2_attack(model, valloader, epsilon, alpha, iters)
     directory = f"adv_examples/{get_str_parameters(epsilon, alpha, iters)}"
     save_adv_examples(adv_examples, directory, max_examples=max_examples)
     save_results(final_acc, epsilon, alpha, iters, directory)
+
+    ##############
+    logger.info("Evaluating KAN CNN")
 
     model = CNNKAN()
     model.load_state_dict(
         torch.load("ml_security/kolmogorov_arnold/eval/cnn/CIFAR10/kan_cnn.pth")
     )
     model.to(DEVICE)
+
+    original_acc = test_original(model, valloader)
+    logger.info("Original Accuracy", original_acc=original_acc)
 
     final_acc, adv_examples = test_l2_attack(model, valloader, epsilon, alpha, iters)
     directory = f"adv_examples_kan/{get_str_parameters(epsilon, alpha, iters)}"
