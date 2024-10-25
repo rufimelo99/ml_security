@@ -68,11 +68,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dataset",
         type=str,
-        default="MNIST",
+        default="CIFAR10",
         choices=[
-            "MNIST",
             "CIFAR10",
-            "FASHION_MNIST",
         ],
     )
     parser.add_argument("--epochs", type=int, default=5)
