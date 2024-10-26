@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from ml_security.attacks.carlini_wagner_attack import test_cw_attack
+from ml_security.attacks.carlini_wagner_attack import CarliniWagnerAttack
 from ml_security.datasets.datasets import (
     DATASET_REGISTRY,
     DEFAULT_TRANSFORM_3CH,
@@ -126,15 +126,10 @@ if __name__ == "__main__":
     original_acc = test_original(model, valloader)
     logger.info("Original Accuracy", original_acc=original_acc)
 
-    final_acc, adv_examples = test_cw_attack(
-        model,
-        valloader,
-        c=1e-4,
-        lr=0.01,
-        num_steps=2,
-        device=DEVICE,
-        batch_size=BATCH_SIZE,
-    )
+    cw_attack = CarliniWagnerAttack(DEVICE, c=1e-4, lr=0.01, num_steps=2)
+    adv_examples = cw_attack.attack(model, valloader)
+    final_acc = cw_attack.evaluate(model, adv_examples)
+
     directory = f"adv_examples_cw/eps_1.0_alpha_0.01_iters_1000"
     save_adv_examples(adv_examples, directory, max_examples=max_examples)
     save_results(final_acc, epsilon, alpha, iters, directory)
@@ -151,15 +146,9 @@ if __name__ == "__main__":
     original_acc = test_original(model, valloader)
     logger.info("Original Accuracy", original_acc=original_acc)
 
-    final_acc, adv_examples = test_cw_attack(
-        model,
-        valloader,
-        c=1e-4,
-        lr=0.01,
-        num_steps=2,
-        device=DEVICE,
-        batch_size=BATCH_SIZE,
-    )
+    adv_examples = cw_attack.attack(model, valloader)
+    final_acc = cw_attack.evaluate(model, adv_examples)
+
     directory = f"adv_examples_kan_cw/eps_1.0_alpha_0.01_iters_1000"
     save_adv_examples(adv_examples, directory, max_examples=max_examples)
     save_results(final_acc, epsilon, alpha, iters, directory)
