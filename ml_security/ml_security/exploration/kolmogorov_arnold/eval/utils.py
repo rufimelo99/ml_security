@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from ml_security.kolmogorov_arnold.network import HybridLinearKAN
+from ml_security.exploration.kolmogorov_arnold.network import HybridLinearKAN
 from ml_security.logger import logger
 
 

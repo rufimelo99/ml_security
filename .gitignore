@@ -171,27 +171,27 @@ ml_security/.DS_Store
 /ml_security/ml_security/data
 /ml_security/ml_security/examples/data
 /ml_security/ml_security/melo_nn/data
-/ml_security/ml_security/memorization/controlled
+ml_security/ml_security/exploration/memorisation/controlled
 /ml_security/ml_security/adaptative_linear_network/data
-/ml_security/ml_security/kolmogorov_arnold/data
-/ml_security/ml_security/kolmogorov_arnold/eval/data
+ml_security/ml_security/exploration/kolmogorov_arnold/data
+ml_security/ml_security/exploration/kolmogorov_arnold/eval/data
 
 # Ignore specific dataset files
 /ml_security/ml_security/datasets/nlp/commoncrawl.warc.wet
 
 # Ignore evaluation directories
-/ml_security/ml_security/kolmogorov_arnold/eval/cnn
+ml_security/ml_security/exploration/kolmogorov_arnold/eval/cnn
 
 # Specific datasets under evaluation
-/ml_security/ml_security/kolmogorov_arnold/eval/CIFAR10
-/ml_security/ml_security/kolmogorov_arnold/eval/FASHION_MNIST
-/ml_security/ml_security/kolmogorov_arnold/eval/BREAST_CANCER
-/ml_security/ml_security/kolmogorov_arnold/eval/BANK_MARKETING
-/ml_security/ml_security/kolmogorov_arnold/eval/IRIS
-/ml_security/ml_security/kolmogorov_arnold/eval/MNIST
+ml_security/ml_security/exploration/kolmogorov_arnold/eval/CIFAR10
+ml_security/ml_security/exploration/kolmogorov_arnold/eval/FASHION_MNIST
+ml_security/ml_security/exploration/kolmogorov_arnold/eval/BREAST_CANCER
+ml_security/ml_security/exploration/kolmogorov_arnold/eval/BANK_MARKETING
+ml_security/ml_security/exploration/kolmogorov_arnold/eval/IRIS
+ml_security/ml_security/exploration/kolmogorov_arnold/eval/MNIST
 
 # Ignore model directories
-/ml_security/ml_security/kolmogorov_arnold/model
+ml_security/ml_security/exploration/kolmogorov_arnold/model
 /ml_security/adv_examples
 /ml_security/adv_examples_kan
 /ml_security/adv_examples_cw

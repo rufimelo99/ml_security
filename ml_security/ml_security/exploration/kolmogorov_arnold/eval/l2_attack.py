@@ -15,7 +15,7 @@ from ml_security.datasets.datasets import (
     DatasetType,
     create_dataloader,
 )
-from ml_security.kolmogorov_arnold.eval.utils import CNN, CNNKAN
+from ml_security.exploration.kolmogorov_arnold.eval.utils import CNN, CNNKAN
 from ml_security.logger import logger
 from ml_security.utils.utils import get_device, set_seed
 
@@ -119,7 +119,9 @@ if __name__ == "__main__":
     logger.info("Evaluating Classic CNN with Carlini-Wagner Attack")
     model = CNN()
     model.load_state_dict(
-        torch.load("ml_security/kolmogorov_arnold/eval/cnn/CIFAR10/classic_cnn.pth")
+        torch.load(
+            "ml_security/exploration/kolmogorov_arnold/eval/cnn/CIFAR10/classic_cnn.pth"
+        )
     )
     model.to(DEVICE)
 
@@ -139,7 +141,9 @@ if __name__ == "__main__":
     logger.info("Evaluating KAN CNN with Carlini-Wagner Attack")
     model = CNNKAN()
     model.load_state_dict(
-        torch.load("ml_security/kolmogorov_arnold/eval/cnn/CIFAR10/kan_cnn.pth")
+        torch.load(
+            "ml_security/exploration/kolmogorov_arnold/eval/cnn/CIFAR10/kan_cnn.pth"
+        )
     )
     model.to(DEVICE)
 

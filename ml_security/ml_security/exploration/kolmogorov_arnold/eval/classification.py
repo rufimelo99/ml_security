@@ -10,7 +10,7 @@ from ml_security.datasets.datasets import (
     DatasetType,
     create_dataloader,
 )
-from ml_security.kolmogorov_arnold.eval.utils import (
+from ml_security.exploration.kolmogorov_arnold.eval.utils import (
     HybridNet,
     LinearNet,
     classic_training,
