@@ -1,12 +1,14 @@
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
+import torch.utils
 from torchvision import transforms
 from tqdm import tqdm
 
-from ml_security.attacks.membership_inference_attack import create_attack_dataloader
+from ml_security.attacks.membership_inference_attack import (
+    ExampleAttackModel,
+    MembershipInferenceAttack,
+)
 from ml_security.datasets.datasets import DatasetType, create_dataloader
 from ml_security.examples.mnist.model import Net
 from ml_security.logger import logger
@@ -17,19 +19,30 @@ set_seed(42)
 MODEL_PATH = "ml_security/examples/mnist/mnist_cnn.pt"
 
 
-# Defines a simple attack model.
-class AttackModel(nn.Module):
-    def __init__(self):
-        super(AttackModel, self).__init__()
-        self.fc1 = nn.Linear(1, 64)
-        self.fc2 = nn.Linear(64, 1)
+@torch.no_grad()
+def get_confidence_scores(
+    model, data_loader: torch.utils.data.DataLoader, device: torch.device
+) -> np.ndarray:
+    """
+    Get the confidence scores for the given model and data loader.
 
-    def forward(self, x):
-        if x.dim() == 1:
-            x = x.unsqueeze(1)
-        x = F.relu(self.fc1(x))
-        x = torch.sigmoid(self.fc2(x))
-        return x
+    Args:
+        model (torch.nn.Module): The model to use. A classifier in this scenario.
+        data_loader (torch.utils.data.DataLoader): The data loader to use.
+        device (torch.device): The device to use.
+
+    Returns:
+        np.ndarray: The confidence scores.
+    """
+    model.eval()
+    confidence_scores = []
+    for batch_data, batch_target in tqdm(data_loader):
+        batch_data, batch_target = batch_data.to(device), batch_target.to(device)
+        output = model(batch_data)
+        confidence_scores.append(F.softmax(output, dim=1).cpu().numpy())
+
+    # Returns the confidence scores -> Shape: (n_samples, n_classes)
+    return np.concatenate(confidence_scores)
 
 
 if __name__ == "__main__":
@@ -44,8 +57,6 @@ if __name__ == "__main__":
     model.load_state_dict(
         torch.load(MODEL_PATH, map_location=device, weights_only=True)
     )
-
-    # Sets the model in evaluation mode. In this case this is for the Dropout layers
     model.eval()
 
     transformation = transforms.Compose(
@@ -64,44 +75,20 @@ if __name__ == "__main__":
         split_ratio=[80, 20],
     )
 
-    attack_loader, attack_labels = create_attack_dataloader(
+    mia = MembershipInferenceAttack(
         train_loader=train_loader,
         holdout_loader=holdout_loader,
         model=model,
         device=device,
+        get_confidence_scores_fn=get_confidence_scores,
+    )
+    attack_model = ExampleAttackModel(input_dim=10).to(device)
+    attack_model = mia.attack(
+        attack_model=attack_model,
+        epochs=1,
+        lr=0.01,
     )
 
-    # Initialize the attack model.
-    attack_model = AttackModel().to(device)
-    criterion = nn.BCELoss()
-    optimizer = optim.Adam(attack_model.parameters(), lr=0.001)
-
-    # Trains the attack model.
-    attack_model.train()
-
-    for epoch in range(100):
-        for data, target in tqdm(attack_loader):
-            data, target = data.to(device), target.to(device)
-            optimizer.zero_grad()
-            output = attack_model(data)
-            loss = criterion(output, target.unsqueeze(1))
-            loss.backward()
-            optimizer.step()
-
-        if epoch % 10 == 0:
-            logger.info("Finished epoch", epoch=epoch, loss=loss.item())
-
-    attack_model.eval()
-
-    attack_predictions = []
-    with torch.no_grad():
-        for data, target in tqdm(attack_loader):
-            data, target = data.to(device), target.to(device)
-            output = attack_model(data)
-            attack_predictions.append(output.cpu().numpy())
-
-    attack_predictions = np.concatenate(attack_predictions)
-
-    # Calculate the accuracy of the attack model.
-    attack_accuracy = np.mean((attack_predictions > 0.5) == attack_labels)
-    logger.info("Attack stats", accuracy=attack_accuracy)
+    # Defines the attack model.
+    acc = mia.evaluate(attack_model)
+    logger.info(f"Attack model accuracy: {acc}")
