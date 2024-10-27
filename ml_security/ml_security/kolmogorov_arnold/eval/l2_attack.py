@@ -128,7 +128,7 @@ if __name__ == "__main__":
 
     cw_attack = CarliniWagnerAttack(DEVICE, c=1e-4, lr=0.01, num_steps=2)
     adv_examples = cw_attack.attack(model, valloader)
-    final_acc = cw_attack.evaluate(model, adv_examples)
+    final_acc = cw_attack.evaluate(adv_examples)
 
     directory = f"adv_examples_cw/eps_1.0_alpha_0.01_iters_1000"
     save_adv_examples(adv_examples, directory, max_examples=max_examples)
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     logger.info("Original Accuracy", original_acc=original_acc)
 
     adv_examples = cw_attack.attack(model, valloader)
-    final_acc = cw_attack.evaluate(model, adv_examples)
+    final_acc = cw_attack.evaluate(adv_examples)
 
     directory = f"adv_examples_kan_cw/eps_1.0_alpha_0.01_iters_1000"
     save_adv_examples(adv_examples, directory, max_examples=max_examples)

@@ -52,7 +52,6 @@ class AdversarialAttack(Attack):
 
     def evaluate(
         self,
-        model: torch.nn.Module,
         adv_examples: Union[List[torch.Tensor], torch.utils.data.DataLoader],
     ):
         """
@@ -65,11 +64,13 @@ class AdversarialAttack(Attack):
         Returns:
             float: The accuracy on adversarial examples.
         """
+        assert isinstance(adv_examples, list) or isinstance(
+            adv_examples, torch.utils.data.DataLoader
+        ), "adv_examples must be a list or a DataLoader."
+        assert len(adv_examples[0]) == 3, "adv_examples must be a list of tuples."
         correct = 0
         total = len(adv_examples)
-        for target, pred, _ in adv_examples:
-            if target == pred:
+        for original_target, pred, adv_ex in adv_examples:
+            if original_target == pred:
                 correct += 1
-        final_acc = correct / total
-        logger.info("Final Accuracy on Adversarial Examples", final_acc=final_acc)
-        return final_acc
+        return correct / total
