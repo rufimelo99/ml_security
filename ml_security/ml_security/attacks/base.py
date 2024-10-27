@@ -22,8 +22,8 @@ class Attack(ABC):
 
 
 class AdversarialAttack(Attack):
-    def __init__(self):
-        super(AdversarialAttack, self).__init__()
+    def __init__(self, alias: str):
+        self.alias = alias
 
     def attack(self, model: torch.nn.Module, dataloader: torch.utils.data.DataLoader):
         """
@@ -74,3 +74,34 @@ class AdversarialAttack(Attack):
             if original_target == pred:
                 correct += 1
         return correct / total
+
+
+class InferenceAttack(Attack):
+    def __init__(self, alias: str):
+        self.alias = alias
+
+    def attack(self, attack_model: torch.nn.Module, **kwargs):
+        """
+        Performs the Membership Inference Attack on the model.
+
+        Args:
+            attack_model (torch.nn.Module): The attack model.
+            kwargs: Additional arguments.
+
+        Returns:
+            torch.nn.Module: The attack model.
+        """
+        raise NotImplementedError
+
+    def evaluate(self, attack_model: torch.nn.Module, **kwargs):
+        """
+        Evaluates the model with the adversarial examples.
+
+        Args:
+            attack_model (torch.nn.Module): The attack model.
+            kwargs: Additional arguments.
+
+        Returns:
+            float: The accuracy of the model.
+        """
+        raise NotImplementedError

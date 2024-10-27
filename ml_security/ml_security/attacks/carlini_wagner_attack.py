@@ -35,6 +35,7 @@ class CarliniWagnerAttack(AdversarialAttack):
         lr: float = 0.01,
         num_steps: int = 1000,
     ):
+        super().__init__(alias="CarliniWagnerAttack")
         self.distance_metric = distance_metric
         self.c = c
         self.lr = lr
