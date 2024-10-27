@@ -46,6 +46,7 @@ class FastGradientSignAttack(AdversarialAttack):
             epsilon (float): The epsilon value to use for the attack.
             device (torch.device): The device to use for the attack.
         """
+        super().__init__(alias="FastGradientSignAttack")
         self.device = device
         self.epsilon = epsilon
 

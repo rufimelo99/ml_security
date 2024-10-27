@@ -8,7 +8,7 @@ from torch import optim
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
-from ml_security.attacks.base import Attack
+from ml_security.attacks.base import InferenceAttack
 from ml_security.logger import logger
 
 
@@ -50,7 +50,7 @@ class ExampleAttackModel(nn.Module):
         return x
 
 
-class MembershipInferenceAttack(Attack):
+class MembershipInferenceAttack(InferenceAttack):
     """
     Membership Inference Attack.
     """
@@ -74,6 +74,7 @@ class MembershipInferenceAttack(Attack):
             device (torch.device): The device to use for the attack.
             attack_model (Optional[nn.Module]): The attack model to use.
         """
+        super().__init__(alias="MembershipInferenceAttack")
         self.device = device
         self.model = model
         self.attack_model = ExampleAttackModel()
