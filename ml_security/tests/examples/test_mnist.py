@@ -6,7 +6,7 @@ import pytest
 import torch
 from torchvision import transforms
 
-from ml_security.attacks.membership_inference_attack import create_attack_dataloader
+from ml_security.attacks.membership_inference_attack import MembershipInferenceAttack
 from ml_security.datasets.datasets import DatasetType, create_dataloader
 from ml_security.examples.mnist.membership_inference_attack import MODEL_PATH, Net
 from ml_security.examples.mnist.model import Net
@@ -37,7 +37,14 @@ def test_dataloader_creation():
     model = Net()
     model.load_state_dict(torch.load(MODEL_PATH, map_location="cpu", weights_only=True))
 
-    attack_loader, attack_labels = create_attack_dataloader(
+    mia = MembershipInferenceAttack(
+        train_loader=train_loader,
+        holdout_loader=holdout_loader,
+        model=model,
+        device="cpu",
+    )
+
+    attack_loader, attack_labels = mia.create_attack_dataloader(
         train_loader=train_loader,
         holdout_loader=holdout_loader,
         model=model,

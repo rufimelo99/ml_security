@@ -6,7 +6,6 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 from ml_security.attacks.base import AdversarialAttack
-from ml_security.logger import logger
 
 
 @dataclass
