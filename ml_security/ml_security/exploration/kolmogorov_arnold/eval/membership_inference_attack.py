@@ -12,7 +12,7 @@ from ml_security.datasets.datasets import (
     DatasetType,
     create_dataloader,
 )
-from ml_security.kolmogorov_arnold.eval.utils import CNN, CNNKAN
+from ml_security.exploration.kolmogorov_arnold.eval.utils import CNN, CNNKAN
 from ml_security.logger import logger
 from ml_security.utils.utils import get_device, set_seed
 
@@ -21,7 +21,9 @@ DEVICE = get_device()
 BATCH_SIZE = 64
 
 
-model_path = "ml_security/kolmogorov_arnold/eval/cnn/CIFAR10/classic_cnn.pth"
+model_path = (
+    "ml_security/exploration/kolmogorov_arnold/eval/cnn/CIFAR10/classic_cnn.pth"
+)
 model = CNN()
 model.load_state_dict(torch.load(model_path))
 model.to(DEVICE)

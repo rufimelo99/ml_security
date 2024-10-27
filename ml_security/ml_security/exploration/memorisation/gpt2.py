@@ -54,12 +54,10 @@ if __name__ == "__main__":
     num_batches = int(np.ceil(args.num_samples / args.batch_size))
     with tqdm(total=args.num_samples) as pbar:
         for i in range(num_batches):
-
             input_len = 10
             input_ids = []
             attention_mask = []
             while len(input_ids) < args.batch_size:
-
                 r = np.random.randint(0, len(cc))
                 prompt = " ".join(cc[r : r + 100].split(" ")[1:-1])
                 inputs = tokenizer(
