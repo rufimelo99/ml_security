@@ -2,6 +2,8 @@
 This module contains the tests for the MNIST example.
 """
 
+# pylint: disable=duplicate-code
+
 import torch
 from torchvision import transforms
 

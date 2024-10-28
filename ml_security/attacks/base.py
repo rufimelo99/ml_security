@@ -72,6 +72,8 @@ class InferenceAttack(Attack):
 
         Args:
             attack_model (torch.nn.Module): The attack model.
+            epochs (int): The number of epochs.
+            lr (float): The learning
             kwargs: Additional arguments.
 
         Returns:
