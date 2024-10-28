@@ -23,7 +23,6 @@ extensions = [
     "sphinx_design",
     "sphinx_book_theme",
     "sphinx_multitoc_numbering",
-    "sphinx.ext.imgconverter",
 ]
 external_toc_exclude_missing = False
 external_toc_path = "_toc.yml"
