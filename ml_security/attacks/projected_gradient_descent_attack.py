@@ -73,7 +73,7 @@ class ProjectedGradientDescent(FastGradientSignAttack):
 
             adversarial_examples.append(perturbed_inputs)
 
-        return adversarial_examples
+        return adversarial_examples, adversarial_examples
 
     def _pgd_attack(
         self,

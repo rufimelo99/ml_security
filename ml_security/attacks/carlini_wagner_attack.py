@@ -54,6 +54,7 @@ class CarliniWagnerAttack(AdversarialAttack):
             torch.Tensor: The adversarial examples.
         """
         adv_examples = []
+        all_examples = []
         correct = 0
         for data, target in tqdm(dataloader):
             data, target = data.to(self.device), target.to(self.device)
@@ -73,15 +74,20 @@ class CarliniWagnerAttack(AdversarialAttack):
             # Gets the adversarial examples when it is misclassified.
             adv_idxs = final_pred.ne(target.view_as(final_pred)).view(-1)
             for i in range(len(adv_idxs)):
+                adv_ex = perturbed_data[i].squeeze().detach().cpu().numpy()
+                entry = (target[i].item(), final_pred[i].item(), adv_ex)
                 if adv_idxs[i]:
-                    adv_ex = perturbed_data[i].squeeze().detach().cpu().numpy()
                     adv_examples.append(
-                        (target[i].item(), final_pred[i].item(), adv_ex)
+                        entry
                     )
+
+                all_examples.append(
+                    entry
+                )
 
         final_acc = correct / (float(len(dataloader)) * dataloader.batch_size)
         logger.info("Final Accuracy", final_acc=final_acc)
-        return adv_examples
+        return adv_examples, all_examples
 
     def _carlini_wagner_attack(
         self,
