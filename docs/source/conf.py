@@ -60,7 +60,6 @@ html_theme_options = {
     "use_issues_button": False,
 }
 html_title = "ml_security"
-latex_engine = "pdflatex"
 myst_enable_extensions = [
     "colon_fence",
     "dollarmath",
