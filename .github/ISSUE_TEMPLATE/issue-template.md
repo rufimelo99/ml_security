@@ -6,7 +6,7 @@ labels: ''
 assignees: rufimelo99
 ---
 
-# Describe the bug
+## Describe the bug
 
 Write a clear and concise description of what the bug is.
 

@@ -23,7 +23,9 @@ class AdversarialAttack(Attack):
     def __init__(self, alias: str):
         self.alias = alias
 
-    def attack(self, model: torch.nn.Module, dataloader: torch.utils.data.DataLoader):
+    def attack(
+        self, model: torch.nn.Module, dataloader: torch.utils.data.DataLoader, **kwargs
+    ):
         """
         Generates adversarial examples.
 
