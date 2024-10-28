@@ -1,4 +1,5 @@
 from ml_security.datasets.datasets import (
+    DATASET_REGISTRY,
     DEFAULT_TRANSFORM,
     DEFAULT_TRANSFORM_3CH,
     DatasetInfo,
@@ -8,6 +9,7 @@ from ml_security.datasets.datasets import (
 )
 
 __all__ = [
+    "DATASET_REGISTRY",
     "DatasetOrigin",
     "DatasetType",
     "DatasetInfo",
