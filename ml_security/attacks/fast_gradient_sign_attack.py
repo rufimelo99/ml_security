@@ -66,8 +66,10 @@ class FastGradientSignAttack(AdversarialAttack):
 
         Returns:
             List: The adversarial examples.
+            List: All examples.
         """
         adv_examples = []
+        all_examples = []
 
         for data, target in tqdm(dataloader):
             data, target = data.to(self.device), target.to(self.device)
@@ -103,14 +105,12 @@ class FastGradientSignAttack(AdversarialAttack):
             output = model(perturbed_data)
 
             final_pred = output.max(1, keepdim=True)[1]
+            adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
+            entry = (init_pred.item(), final_pred.item(), adv_ex)
             if final_pred.item() == target.item():
-                adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
-                adv_examples.append((init_pred.item(), final_pred.item(), adv_ex))
-            else:
-                adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
-                adv_examples.append((init_pred.item(), final_pred.item(), adv_ex))
-
-        return adv_examples
+                adv_examples.append(entry)
+            all_examples.append(entry)
+        return adv_examples, all_examples
 
     def _fgsm_attack(
         self, image: torch.Tensor, epsilon: float, data_grad: torch.Tensor

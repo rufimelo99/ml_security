@@ -35,6 +35,7 @@ class AdversarialAttack(Attack):
 
         Returns:
             torch.Tensor: The adversarial examples.
+            torch.Tensor: All examples.
         """
         raise NotImplementedError
 
