@@ -5,6 +5,9 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+import sys
+
+import sphinx_rtd_theme
 
 project = "ml_security"
 copyright = "2024, Rui Melo"
@@ -29,7 +32,7 @@ extensions = [
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
     "nbsphinx_link",
-    "sphinx_rtd_theme"
+    "sphinx_rtd_theme",
 ]
 
 autodoc_default_options = {
