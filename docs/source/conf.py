@@ -77,3 +77,5 @@ numfig = True
 pygments_style = "sphinx"
 suppress_warnings = ["myst.domains"]
 use_multitoc_numbering = True
+# Add this line to your conf.py to disable the image converter
+jupyter_sphinx_image_formats = ["svg", "png"]
