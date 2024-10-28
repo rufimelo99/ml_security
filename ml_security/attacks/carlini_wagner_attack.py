@@ -73,7 +73,7 @@ class CarliniWagnerAttack(AdversarialAttack):
             # Gets the adversarial examples when it is misclassified.
             adv_idxs = final_pred.ne(target.view_as(final_pred)).view(-1)
             for i in range(len(adv_idxs)):
-                if not adv_idxs[i]:
+                if adv_idxs[i]:
                     adv_ex = perturbed_data[i].squeeze().detach().cpu().numpy()
                     adv_examples.append(
                         (target[i].item(), final_pred[i].item(), adv_ex)
