@@ -78,5 +78,3 @@ numfig = True
 pygments_style = "sphinx"
 suppress_warnings = ["myst.domains"]
 use_multitoc_numbering = True
-import sphinx.ext.imgconverter
-sphinx.ext.imgconverter.imgconverter_img_path = lambda src: src
