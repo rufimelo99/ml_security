@@ -22,7 +22,6 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx_design",
     "sphinx_book_theme",
-    "sphinx_jupyterbook_latex",
     "sphinx_multitoc_numbering",
     "sphinx.ext.imgconverter",
 ]
@@ -78,5 +77,6 @@ nb_output_stderr = "show"
 numfig = True
 pygments_style = "sphinx"
 suppress_warnings = ["myst.domains"]
-use_jupyterbook_latex = True
 use_multitoc_numbering = True
+import sphinx.ext.imgconverter
+sphinx.ext.imgconverter.imgconverter_img_path = lambda src: src
