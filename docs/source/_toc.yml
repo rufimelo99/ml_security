@@ -5,8 +5,8 @@ format: jb-book
 root: intro
 parts:
 - caption: Basic attacks and defenses
-#   chapters:
-#   # - file: attacks
+  chapters:
+  - file: attacks
 # - caption: Resourceful implementations
 #   chapters:
 #   - file: datasets
