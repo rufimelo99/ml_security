@@ -5,15 +5,25 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+import os
 import sys
+from unittest.mock import MagicMock
 
 import sphinx_rtd_theme
+
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+        return MagicMock()
+
+
+sys.path.insert(0, os.path.abspath("../.."))
 
 project = "ml_security"
 copyright = "2024, Rui Melo"
 author = "Rui Melo"
 release = "0.0.5"
-
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -26,13 +36,14 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
-    "sphinx.ext.autosummary",
+    # "sphinx.ext.autosummary",
     "sphinx.ext.extlinks",
     "sphinx.ext.viewcode",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
     "nbsphinx_link",
     "sphinx_rtd_theme",
+    "sphinx.ext.autosummary",
 ]
 
 autodoc_default_options = {
@@ -44,21 +55,50 @@ autodoc_default_options = {
 }
 
 autodoc_mock_imports = [
-    "structlog==21.1.0",
-    "pandas==1.3.3",
-    "numpy==1.21.2",
-    "typing==3.7.4.3",
-    "isort==5.13.2",
-    "black==24.8.0",
-    "torch==1.9.1",
-    "einops==0.3.2",
-    "tqdm==4.66.5",
-    "torchvision",
-    "matplotlib",
-    "scikit-learn",
-    "datasets",
-    "pre-commit",
+    "numpy",
+    "scipy",
+    "pandas",
+    "tqdm",
+    "cython",
+    "torch",
+    "sklearn",
+    "datasetsforecast",
+    "statsforecast",
+    "mlforecast",
+    "neuralforecast",
+    "numba",
+    "arch",
+    "lightgbm",
+    "pytorch_lightning",
+    "lightning_fabric",
+    "lightning_utilities",
+    "importlib_metadata",
+    "torch.nn",
+    "torch.optim",
+    "pytorch_lightning.callbacks",
+    "pytorch_lightning.utilities",
+    "tslearn",
+    "tslearn.barycenters",
+    "scipy.interpolate",
+    "scipy.stats",
+    "statsmodels",
+    "statsmodels.tsa",
+    "statsmodels.tsa.api",
+    "statsmodels.compat",
+    "statsmodels.tools",
+    "packaging",
+    "patsy",
 ]
+
+MOCK_MODULES = [
+    "numpy",
+    "scipy",
+    "torch",
+    "pytorch_lightning",
+    "lightning_fabric",
+    "lightning_utilities",
+]
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "**.ipynb_checkpoints"]
