@@ -10,4 +10,3 @@ parts:
 - caption: Resourceful implementations
   chapters:
   - file: datasets
-  - file: utils
