@@ -42,7 +42,7 @@ extensions = [
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
     "nbsphinx_link",
-    "sphinx_rtd_theme",
+    "sphinx_rtd_theme"
 ]
 
 autodoc_default_options = {
