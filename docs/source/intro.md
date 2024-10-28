@@ -1,39 +1,25 @@
 (intro)=
 
-# Jupyter Book on Read the Docs
+# ml_security
 
-This example shows a Jupyter Book project built and published on Read the Docs.
-You're encouraged to use it to get inspiration and copy & paste from the files in [the source code repository][github]. In the source repository, you will also find the relevant configuration and instructions for building Jupyter Book projects on Read the Docs.
+Package for security in machine learning.
+Contains known algorithms for adversarial attacks and defenses.
 
-If you are using Read the Docs for the first time, have a look at the official [Read the Docs Tutorial][tutorial].
-If you are using Jupyter Book for the first time, have a look at the [official Jupyter Book documentation][jb-docs].
+[![PyPi Version](https://img.shields.io/pypi/v/ml_security)](https://pypi.org/project/ml_security/)
+[![GitHub](https://img.shields.io/github/stars/rufimelo99/ml_security?style=social)](https://github.com/rufimelo99/ml_security)
+[![Documentation Status](https://readthedocs.org/projects/ml-security/badge/?version=latest)](https://ml-security.readthedocs.io/en/latest/?badge=latest)
+[![Downloads](https://static.pepy.tech/badge/ml_security)](https://pepy.tech/project/ml_security)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/25cf2a7639dd468fa40868831caadeb7)](https://app.codacy.com/gh/rufimelo99/ml_security/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
-## Why run Jupyter Book with Read the Docs?
+## Installation
 
-[Read the Docs](https://readthedocs.org/) simplifies developing Jupyter Book projects by automating building, versioning, and hosting of your project for you.
-You might be familiar with Read the Docs for software documentation projects, but these features are just as relevant for science.
+```bash
+pip install ml_security
+```
 
-With Read the Docs, you can improve collaboration on your Jupyter Book project with Git (GitHub, GitLab, BitBucket etc.) and then connect the Git repository to Read the Docs.
-Once Read the Docs and the git repository are connected, your project will be built and published automatically every time you commit and push changes with git.
-Furthermore, if you open Pull Requests, you can preview the result as rendered by Jupyter Book.
+## Introduction
 
-## What is in this example?
-
-Jupyter Book has a number of built-in features.
-This is a small example book to give you a feel for how book content is structured.
-It shows off a few of the major file types, as well as some sample content.
-It does not go in-depth into any particular topic - check out [the Jupyter Book documentation][jb-docs] for more information.
-
-* [Examples of Markdown](/markdown)
-* [Rendering a notebook Jupyter Notebook](/notebooks)
-* [A notebook written in MyST Markdown](/markdown-notebooks)
-
-We have also added some popular features for Jupyter Book that really you shouldn't miss when building your own project with Jupyter Book and Read the Docs:
-
-* [intersphinx to link to other documentation and Jupyter Book projects](/intersphinx)
-* [sphinx-examples to show examples and results side-by-side](/sphinx-examples)
-* [sphinx-hoverxref to preview cross-references](/sphinx-hoverxref)
-* [sphinx-proof for logic and math, to write proofs, theorems, lemmas etc.](/sphinx-proof)
+This package contains known algorithms for adversarial attacks and defenses in machine learning.
 
 
 ## Table of Contents
@@ -42,7 +28,3 @@ Here is an automatically generated Tabel of Contents:
 
 ```{tableofcontents}
 ```
-
-[github]: https://github.com/readthedocs-examples/example-jupyter-book/ "GitHub source code repository for the example project"
-[tutorial]: https://docs.readthedocs.io/en/stable/tutorial/index.html "Official Read the Docs Tutorial"
-[jb-docs]: https://jupyterbook.org/en/stable/ "Official Jupyter Book documentation"

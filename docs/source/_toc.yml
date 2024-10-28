@@ -4,9 +4,6 @@
 format: jb-book
 root: intro
 parts:
-- caption: Basic examples 🪄
+- caption: Basic attacks and defenses
   chapters:
   - file: attacks
-# - caption: Cool extensions 🕶️
-#   chapters:
-#   - file: datasets
