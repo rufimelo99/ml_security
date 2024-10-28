@@ -15,16 +15,23 @@ class CarliniWagnerAttack(AdversarialAttack):
     that are misclassified by the model. The attack minimizes the perturbation size while maximizing
     the loss of the true class or minimizing the loss of the target class.
 
-    Args:
-        device (torch.device): The device to run the attack on.
-        distance_metric (DistanceMetricType): The distance metric to use for the attack.
-        c (float): The weight for the loss term.
-        lr (float): The learning rate for the attack.
-        num_steps (int): The number of optimization steps to perform.
+    Parameters
+        ----------
+        device: torch.device
+            The device to run the attack on.
+        distance_metric: DistanceMetricType
+            The distance metric to use for the attack.
+        c: float
+            The weight for the loss term.
+        lr: float
+            The learning rate for the attack.
+        num_steps: int
+            The number of optimization steps to perform.
 
-    References:
+    References
+    -----------
     - Carlini, N., & Wagner, D. (2017). Towards evaluating the robustness of neural networks.
-    In 2017 IEEE Symposium on Security and Privacy (SP) (pp. 39-57).
+        In 2017 IEEE Symposium on Security and Privacy (SP) (pp. 39-57).
     """
 
     def __init__(

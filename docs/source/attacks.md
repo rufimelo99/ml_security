@@ -1,3 +1,7 @@
 # Attacks
 
-attacks are cool
+```{eval-rst}
+.. automodule:: ml_security.attacks
+   :members:
+   :undoc-members:
+   :show-inheritance:
