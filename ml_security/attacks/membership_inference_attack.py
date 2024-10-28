@@ -148,6 +148,7 @@ class MembershipInferenceAttack(InferenceAttack):
         attack_model: nn.Module,
         epochs: int = 10,
         lr: float = 0.01,
+        **kwargs,
     ) -> nn.Module:
         """
         Performs the Membership Inference Attack on the model.

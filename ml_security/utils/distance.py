@@ -15,7 +15,7 @@ class DistanceMetricType(Enum):
 
 class DistanceMetric(ABC):
     @staticmethod
-    def distance(x: torch.Tensor, y: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def distance(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         pass
 
     @classmethod

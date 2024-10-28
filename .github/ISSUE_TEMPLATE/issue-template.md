@@ -4,19 +4,18 @@ about: Describe this issue template's purpose here.
 title: ''
 labels: ''
 assignees: rufimelo99
-
 ---
 
----
-name: Bug report
-about: Describe a bug you want fixed
----
+## Describe the bug
 
-**Describe the bug**
+Write a clear and concise description of what the bug is.
 
-**To Reproduce**
-[ ] - Step 1
+## To Reproduce
 
-**Expected behaviour**
+Steps to reproduce the behavior:
+
+- [ ] Step 1
+
+## Expected behaviour
 
 If applicable, add versions and screenshots to help explain your problem.

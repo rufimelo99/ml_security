@@ -9,9 +9,7 @@ LEVELS = Literal["debug", "info", "warning", "error"]
 
 
 class Logger:
-    def __init__(
-        self, mode: MODES = "dev", min_level: LEVELS = "info", pre_bound: Dict = {}
-    ) -> None:
+    def __init__(self, mode: MODES = "dev", min_level: LEVELS = "info") -> None:
         self.mode = mode
         self.min_level = min_level
 
@@ -20,7 +18,7 @@ class Logger:
         else:
             self._build_prod_logger(min_level)
 
-        self.logger = structlog.get_logger(**pre_bound)
+        self.logger = structlog.get_logger()
 
     def bind(self, **kwargs) -> None:
         """
@@ -152,7 +150,8 @@ class Logger:
             cache_logger_on_first_use=True,
         )
 
-    def __literal_to_level(self, level: LEVELS) -> int:
+    @staticmethod
+    def __literal_to_level(level: LEVELS) -> int:
         """
         Description:
             * Converts the given log level literal to the corresponding integer value. The logging library

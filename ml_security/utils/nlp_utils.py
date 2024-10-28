@@ -6,5 +6,5 @@ def calculate_perplexity(sentence, model, tokenizer, device):
     input_ids = input_ids.to(device)
     with torch.no_grad():
         outputs = model(input_ids, labels=input_ids)
-    loss, logits = outputs[:2]
+    loss, _ = outputs[:2]
     return torch.exp(loss)
