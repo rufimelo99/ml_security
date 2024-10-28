@@ -77,6 +77,6 @@ nb_execution_timeout = 30
 nb_output_stderr = "show"
 numfig = True
 pygments_style = "sphinx"
-suppress_warnings = ["myst.domains"]
+suppress_warnings = ["myst.domains", 'image.nonlocal_uri', 'image.convert']
 use_jupyterbook_latex = True
 use_multitoc_numbering = True
