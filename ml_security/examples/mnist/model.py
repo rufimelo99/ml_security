@@ -11,7 +11,7 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
 from torchvision import datasets, transforms
 
-from ml_security.logger import logger
+from ml_security.utils.logger import logger
 
 
 class Net(nn.Module):

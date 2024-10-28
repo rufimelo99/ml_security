@@ -24,6 +24,7 @@ extensions = [
     "sphinx_book_theme",
     "sphinx_jupyterbook_latex",
     "sphinx_multitoc_numbering",
+    "sphinx.ext.imgconverter",
 ]
 external_toc_exclude_missing = False
 external_toc_path = "_toc.yml"
@@ -77,6 +78,6 @@ nb_execution_timeout = 30
 nb_output_stderr = "show"
 numfig = True
 pygments_style = "sphinx"
-suppress_warnings = ["myst.domains", 'image.nonlocal_uri', 'image.convert']
+suppress_warnings = ["myst.domains"]
 use_jupyterbook_latex = True
 use_multitoc_numbering = True

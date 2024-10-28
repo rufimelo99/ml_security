@@ -9,7 +9,7 @@ import torch
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import TensorDataset
 
-from ml_security.logger import logger
+from ml_security.utils.logger import logger
 
 warnings.filterwarnings("ignore")
 

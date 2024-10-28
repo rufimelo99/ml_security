@@ -3,7 +3,7 @@ import os
 import numpy as np
 import torch
 
-from ml_security.logger import logger
+from ml_security.utils.logger import logger
 
 
 def set_seed(seed: int = 42):

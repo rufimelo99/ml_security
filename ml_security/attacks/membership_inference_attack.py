@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
 from ml_security.attacks.base import InferenceAttack
-from ml_security.logger import logger
+from ml_security.utils.logger import logger
 
 
 @torch.no_grad()

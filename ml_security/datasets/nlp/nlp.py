@@ -1,6 +1,6 @@
 import os
 
-from ml_security.logger import logger
+from ml_security.utils.logger import logger
 
 
 def parse_commoncrawl(wet_file="datasets/nlp/commoncrawl.warc.wet"):
