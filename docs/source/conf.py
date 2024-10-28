@@ -5,9 +5,19 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+import os
 import sys
+from unittest.mock import MagicMock
 
 import sphinx_rtd_theme
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+        return MagicMock()
+
+
+sys.path.insert(0, os.path.abspath("../.."))
 
 project = "ml_security"
 copyright = "2024, Rui Melo"
