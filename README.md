@@ -4,7 +4,7 @@ Contains known algorithms for adversarial attacks and defenses.
 
 [![PyPi Version](https://img.shields.io/pypi/v/ml_security)](https://pypi.org/project/ml_security/)
 [![Downloads](https://static.pepy.tech/badge/ml_security)](https://pepy.tech/project/ml_security)
-
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/25cf2a7639dd468fa40868831caadeb7)](https://app.codacy.com/gh/rufimelo99/ml_security/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
 ## Installation
 
