@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import torch
 import torch.nn.functional as F
@@ -65,8 +64,8 @@ class ProjectedGradientDescent(FastGradientSignAttack):
             inputs, labels = inputs.to(self.device), labels.to(self.device)
 
             if denormlizing_transform:
-                data = self._denorm(
-                    data, denormlizing_transform.mean, denormlizing_transform.std
+                inputs = self._denorm(
+                    inputs, denormlizing_transform.mean, denormlizing_transform.std
                 )
 
             # Generate adversarial examples using PGD
