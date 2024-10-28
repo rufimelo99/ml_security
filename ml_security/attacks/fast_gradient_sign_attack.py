@@ -90,13 +90,11 @@ class FastGradientSignAttack(AdversarialAttack):
             # Collects ``datagrad``.
             data_grad = data.grad.data
 
-            # breakpoint()
             # Restores the data to its original scale.
-            # if denormlizing_transform:
-            #     data = self._denorm(
-            #         data, denormlizing_transform.mean, denormlizing_transform.std
-            #     )
-            # breakpoint()
+            if denormlizing_transform:
+                data = self._denorm(
+                    data, denormlizing_transform.mean, denormlizing_transform.std
+                )
 
             # Calls FGSM Attack.
             perturbed_data = self._fgsm_attack(data, self.epsilon, data_grad)
