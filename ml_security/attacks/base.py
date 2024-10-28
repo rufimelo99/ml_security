@@ -11,7 +11,7 @@ class Attack(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def attack(self, **kwargs):
+    def attack(self, attack_model: torch.nn.Module, **kwargs):
         raise NotImplementedError
 
     @classmethod
