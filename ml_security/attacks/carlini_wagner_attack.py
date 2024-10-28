@@ -77,13 +77,9 @@ class CarliniWagnerAttack(AdversarialAttack):
                 adv_ex = perturbed_data[i].squeeze().detach().cpu().numpy()
                 entry = (target[i].item(), final_pred[i].item(), adv_ex)
                 if adv_idxs[i]:
-                    adv_examples.append(
-                        entry
-                    )
+                    adv_examples.append(entry)
 
-                all_examples.append(
-                    entry
-                )
+                all_examples.append(entry)
 
         final_acc = correct / (float(len(dataloader)) * dataloader.batch_size)
         logger.info("Final Accuracy", final_acc=final_acc)
