@@ -51,14 +51,19 @@ class CarliniWagnerAttack(AdversarialAttack):
 
     def attack(self, model: torch.nn.Module, dataloader: torch.utils.data.DataLoader):
         """
-        Generates adversarial examples.
+        Generates adversarial examples by optimizing the input to misclassify in the target model.
 
-        Args:
-            model (torch.nn.Module): The model to attack.
-            dataloader (torch.utils.data.DataLoader): The dataloader of the dataset.
+        Parameters
+        ----------
+        model : torch.nn.Module
+            The neural network model to attack.
+        dataloader : torch.utils.data.DataLoader
+            A dataloader providing batches of input data to generate adversarial examples.
 
-        Returns:
-            torch.Tensor: The adversarial examples.
+        Returns
+        -------
+        torch.Tensor
+            A tensor containing the adversarial examples created from the input dataset.
         """
         adv_examples = []
         all_examples = []
@@ -102,17 +107,28 @@ class CarliniWagnerAttack(AdversarialAttack):
         target_labels: Optional[torch.Tensor] = None,
     ):
         """
-        Perform the Carlini-Wagner attack on a batch of images.
+        Performs the Carlini-Wagner attack on a batch of images, creating adversarial examples
+        with minimal perturbation to the original images based on the specified distance metric.
 
-        Parameters:
-        - model: The neural network model.
-        - images: Original images (input batch).
-        - labels: True labels of the original images.
-        - device: Device to run the attack on.
-        - target_labels: (Optional) Target labels for a targeted attack. If None, the attack is untargeted.
+        Parameters
+        ----------
+        model : torch.nn.Module
+            The neural network model to attack.
+        images : torch.Tensor
+            A batch of original images serving as the input for the attack.
+        labels : torch.Tensor
+            True class labels for the input images, used in untargeted attacks.
+        device : torch.device
+            Device (CPU or GPU) on which the attack computations are performed.
+        distance_metric : DistanceMetricType, optional
+            The distance metric (e.g., L2) guiding the attack's perturbation minimization.
+        target_labels : Optional[torch.Tensor], optional
+            Target class labels for a targeted attack. If None, the attack is untargeted.
 
-        Returns:
-        - adv_images: Adversarial examples generated from the original images.
+        Returns
+        -------
+        torch.Tensor
+            A tensor containing the adversarial examples generated from the original images.
         """
         distance_metric = get_distance_metric(self.distance_metric)
 

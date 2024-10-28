@@ -9,6 +9,64 @@ LEVELS = Literal["debug", "info", "warning", "error"]
 
 
 class Logger:
+    """
+    A custom logger class to manage logging in different modes (development and production)
+    using the structlog library.
+
+    This logger is designed to provide a flexible logging interface that can be configured
+    based on the environment (dev or prod). It supports various log levels, allows for binding
+    and unbinding of context, and formats log messages appropriately for the specified mode.
+
+    Parameters
+    ----------
+    mode : Literal["dev", "prod"], optional
+        The logging mode to use. Defaults to "dev". In "dev" mode, logs are more verbose and
+        formatted for easy reading. In "prod" mode, logs are formatted for machine readability.
+
+    min_level : Literal["debug", "info", "warning", "error"], optional
+        The minimum log level for the logger. Defaults to "info". This level determines which
+        log messages will be recorded. Messages below this level will be ignored.
+
+    Attributes
+    ----------
+    logger : structlog.BoundLogger
+        The structlog logger instance configured based on the specified mode and minimum log level.
+
+    Methods
+    -------
+    bind(**kwargs)
+        Binds the given key-value pairs to the logger context.
+
+    unbind(keys: List[str])
+        Unbinds the specified keys from the logger context.
+
+    debug(message: str, **kwargs)
+        Logs a debug-level message.
+
+    info(message: str, **kwargs)
+        Logs an info-level message.
+
+    warning(message: str, **kwargs)
+        Logs a warning-level message.
+
+    error(message: str, **kwargs)
+        Logs an error-level message.
+
+    Notes
+    -----
+    - In development mode, the logger produces colored and formatted logs suitable for debugging.
+    - In production mode, logs follow a structured format ideal for logging to files or log management systems.
+    - The logging levels are mapped to their respective integer values using the standard logging library.
+
+    Example
+    -------
+    logger = Logger(mode="dev", min_level="debug")
+    logger.info("This is an info message")
+    logger.bind(user_id=123)
+    logger.error("This is an error message with user context")
+    logger.unbind(["user_id"])
+    """
+
     def __init__(self, mode: MODES = "dev", min_level: LEVELS = "info") -> None:
         self.mode = mode
         self.min_level = min_level

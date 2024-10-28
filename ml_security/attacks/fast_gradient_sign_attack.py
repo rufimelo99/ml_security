@@ -40,11 +40,15 @@ class FastGradientSignAttack(AdversarialAttack):
         device: torch.device,
     ) -> None:
         """
-        Initializes the Fast Gradient Sign Attack.
+        Initializes the Fast Gradient Sign Attack (FGSM), a gradient-based adversarial attack
+        that perturbs the input images in the direction that maximally increases the model's loss.
 
-        Args:
-            epsilon (float): The epsilon value to use for the attack.
-            device (torch.device): The device to use for the attack.
+        Parameters
+        ----------
+        epsilon : float
+            The maximum perturbation magnitude for the attack, controlling the intensity of the adversarial effect.
+        device : torch.device
+            The device (CPU or GPU) on which the attack is executed.
         """
         super().__init__(alias="FastGradientSignAttack")
         self.device = device
@@ -57,16 +61,24 @@ class FastGradientSignAttack(AdversarialAttack):
         denormlizing_transform: Optional[DenormalizingTransformation] = None,
     ) -> List:
         """
-        Performs the Fast Gradient Sign Attack on the model.
+        Performs the Fast Gradient Sign Attack (FGSM) on a given model using input data from the dataloader,
+        generating adversarial examples by applying perturbations based on the model's gradients.
 
-        Args:
-            model (torch.nn.Module): The model to attack.
-            dataloader (torch.utils.data.DataLoader): The dataloader for the dataset.
-            denormlizing_transform (Optional[DenormalizingTransformation]): The denormalizing transformation.
+        Parameters
+        ----------
+        model : torch.nn.Module
+            The neural network model to be attacked.
+        dataloader : torch.utils.data.DataLoader
+            DataLoader providing batches of input data to generate adversarial examples.
+        denormlizing_transform : Optional[DenormalizingTransformation], optional
+            Transformation to reverse normalization, if required. If None, no denormalization is applied.
 
-        Returns:
-            List: The adversarial examples.
-            List: All examples.
+        Returns
+        -------
+        List[torch.Tensor]
+            A list of adversarial examples generated for the input dataset.
+        List[torch.Tensor]
+            A list containing all original, unperturbed examples from the dataset.
         """
         adv_examples = []
         all_examples = []
@@ -116,15 +128,22 @@ class FastGradientSignAttack(AdversarialAttack):
         self, image: torch.Tensor, epsilon: float, data_grad: torch.Tensor
     ) -> torch.Tensor:
         """
-        Fast Gradient Sign Method.
+        Implements the Fast Gradient Sign Method (FGSM) to generate adversarial examples
+        by perturbing the input image in the direction of the gradient of the loss.
 
-        Args:
-            image (torch.Tensor): The original input image.
-            epsilon (float): The epsilon value to use for the attack. Corresponds to the magnitude of the perturbation.
-            data_grad (torch.Tensor): The gradient of the loss with respect to the input.
+        Parameters
+        ----------
+        image : torch.Tensor
+            The original input image that will be perturbed.
+        epsilon : float
+            The magnitude of the perturbation applied to the image; controls the strength of the attack.
+        data_grad : torch.Tensor
+            The computed gradient of the loss with respect to the input image, indicating how to modify the input.
 
-        Returns:
-            torch.Tensor: The perturbed image.
+        Returns
+        -------
+        torch.Tensor
+            The perturbed image, modified to be adversarial against the model.
         """
         # Collects the element-wise sign of the data gradient.
         data_grad_sign = data_grad.sign()
@@ -143,15 +162,21 @@ class FastGradientSignAttack(AdversarialAttack):
         std: Union[torch.Tensor, List[float]],
     ) -> torch.Tensor:
         """
-        Convert a batch of tensors to their original scale.
+        Converts a batch of normalized tensors back to their original scale by applying the inverse of normalization.
 
-        Args:
-            batch (Union[torch.Tensor, List[torch.Tensor]]): Batch of normalized tensors.
-            mean (Union[torch.Tensor, List[float]]): Mean used for normalization.
-            std (Union[torch.Tensor, List[float]]): Standard deviation used for normalization.
+        Parameters
+        ----------
+        batch : Union[torch.Tensor, List[torch.Tensor]]
+            A batch of normalized tensors that need to be denormalized.
+        mean : Union[torch.Tensor, List[float]]
+            The mean values used for normalization, which will be subtracted from the batch.
+        std : Union[torch.Tensor, List[float]]
+            The standard deviation values used for normalization, which will be multiplied to the batch.
 
-        Returns:
-            torch.Tensor: batch of tensors without normalization applied to them.
+        Returns
+        -------
+        torch.Tensor
+            A tensor containing the batch of tensors with normalization removed, restored to their original scale.
         """
         if isinstance(mean, list):
             mean = torch.tensor(mean).to(self.device)

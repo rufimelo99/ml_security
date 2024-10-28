@@ -17,15 +17,22 @@ def get_confidence_scores(
     model, data_loader: DataLoader, device: torch.device
 ) -> np.ndarray:
     """
-    Get the confidence scores for the given model and data loader.
+    Computes the confidence scores for a given model across the dataset provided by the data loader,
+    indicating the model's certainty for its predictions.
 
-    Args:
-        model (torch.nn.Module): The model to use. A classifier in this scenario.
-        data_loader (torch.utils.data.DataLoader): The data loader to use.
-        device (torch.device): The device to use.
+    Parameters
+    ----------
+    model : torch.nn.Module
+        The neural network model to use for generating predictions. Typically a classifier.
+    data_loader : torch.utils.data.DataLoader
+        DataLoader that supplies batches of input data for evaluation.
+    device : torch.device
+        The device (CPU or GPU) on which the model and computations will be executed.
 
-    Returns:
-        np.ndarray: The confidence scores.
+    Returns
+    -------
+    np.ndarray
+        An array of confidence scores corresponding to the model's predictions on the input data.
     """
     model.eval()
     confidence_scores = []
@@ -37,22 +44,49 @@ def get_confidence_scores(
 
 
 class ExampleAttackModel(nn.Module):
+    """
+    A simple feedforward neural network model for demonstrating adversarial attack techniques.
+
+    This model consists of one hidden layer with 64 units and a linear output layer,
+    using ReLU activation for the hidden layer and sigmoid activation for the output.
+
+    Parameters
+    ----------
+    input_dim : int, optional
+        The dimension of the input features. Default is 1.
+    """
+
     def __init__(self, input_dim: int = 1):
         super(ExampleAttackModel, self).__init__()
-        self.fc1 = nn.Linear(input_dim, 64)
-        self.fc2 = nn.Linear(64, 1)
+        self.fc1 = nn.Linear(input_dim, 64)  # First fully connected layer
+        self.fc2 = nn.Linear(64, 1)  # Output layer
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass through the network.
+
+        Args:
+            x (torch.Tensor): The input tensor, expected to be of shape (N, input_dim),
+                              where N is the batch size.
+
+        Returns:
+            torch.Tensor: The output tensor after applying the forward pass.
+                          The output will have values in the range [0, 1].
+        """
         if x.dim() == 1:
-            x = x.unsqueeze(1)
-        x = F.relu(self.fc1(x))
-        x = torch.sigmoid(self.fc2(x))
+            x = x.unsqueeze(1)  # Adjust dimensions if input is 1D
+        x = F.relu(self.fc1(x))  # Apply ReLU activation
+        x = torch.sigmoid(self.fc2(x))  # Apply sigmoid activation for output
         return x
 
 
 class MembershipInferenceAttack(InferenceAttack):
     """
-    Membership Inference Attack.
+    A class implementing the Membership Inference Attack, which determines
+    whether a specific instance was part of the training dataset of a machine learning model.
+
+    This attack utilizes a model to infer membership based on the confidence scores
+    of predictions made by the target model.
     """
 
     def __init__(
@@ -69,10 +103,21 @@ class MembershipInferenceAttack(InferenceAttack):
         """
         Initializes the Membership Inference Attack.
 
-        Args:
-            model (nn.Module): The model to attack.
-            device (torch.device): The device to use for the attack.
-            attack_model (Optional[nn.Module]): The attack model to use.
+        Parameters
+        ----------
+        train_loader : DataLoader
+            The DataLoader containing the training dataset used for the model.
+        holdout_loader : DataLoader
+            The DataLoader containing the holdout dataset (potentially containing unseen examples).
+        model : nn.Module
+            The neural network model to attack.
+        device : torch.device
+            The device (CPU or GPU) on which the attack computations are performed.
+        get_confidence_scores_fn : Optional[Callable], optional
+            A callable function to retrieve confidence scores from the model.
+            If None, a default implementation will be used.
+        batch_size : int, optional
+            The number of samples per batch during the attack. Default is 64.
         """
         super().__init__(alias="MembershipInferenceAttack")
         self.device = device
@@ -109,17 +154,29 @@ class MembershipInferenceAttack(InferenceAttack):
         batch_size: int = 64,
     ) -> Union[DataLoader, np.ndarray]:
         """
-        Create the DataLoader for the attack model.
+        Creates a DataLoader for the attack model, combining the training and holdout datasets
+        to facilitate membership inference.
 
-        Args:
-            train_loader (DataLoader): The DataLoader for the training data.
-            holdout_loader (DataLoader): The DataLoader for the holdout data.
-            model (nn.Module): The model to use.
-            device (torch.device): The device to use.
+        Parameters
+        ----------
+        train_loader : DataLoader
+            The DataLoader for the training data, containing examples that the model has seen.
+        holdout_loader : DataLoader
+            The DataLoader for the holdout data, containing examples that the model has not seen.
+        model : nn.Module
+            The neural network model to use for generating confidence scores.
+        device : torch.device
+            The device (CPU or GPU) on which the computations will be performed.
+        get_confidence_scores : Callable, optional
+            A function to obtain confidence scores from the model.
+            Defaults to the provided function.
+        batch_size : int, optional
+            The number of samples per batch for the DataLoader. Default is 64.
 
-        Returns:
-            DataLoader: The DataLoader for the attack model.
-            np.ndarray: The labels for the attack model.
+        Returns
+        -------
+        Union[DataLoader, np.ndarray]
+            A DataLoader for the attack model and the corresponding labels for the attack model.
         """
         # Gets confidence scores for both train and holdout sets
         train_confidence_scores = get_confidence_scores(model, train_loader, device)
@@ -151,15 +208,26 @@ class MembershipInferenceAttack(InferenceAttack):
         **kwargs,
     ) -> nn.Module:
         """
-        Performs the Membership Inference Attack on the model.
+        Performs the Membership Inference Attack by training an attack model on the provided dataset.
 
-        Args:
-            attack_loader (DataLoader): The DataLoader for the attack model.
-            epochs (int): The number of epochs to train the attack model.
-            lr (float): The learning rate for the attack model.
+        This method optimizes the attack model's parameters through a specified number of epochs
+        using a given learning rate to effectively infer membership.
 
-        Returns:
-            nn.Module: The trained attack model.
+        Parameters
+        ----------
+        attack_model : nn.Module
+            The neural network model used for performing the membership inference attack.
+        epochs : int, optional
+            The number of training epochs for the attack model. Default is 10.
+        lr : float, optional
+            The learning rate for optimizing the attack model's parameters. Default is 0.01.
+        **kwargs : keyword arguments
+            Additional parameters for further customization of the attack training process.
+
+        Returns
+        -------
+        nn.Module
+            The trained attack model after completion of the training process.
         """
         # Initialize the attack model.
         attack_model = attack_model.to(self.device)
@@ -188,14 +256,21 @@ class MembershipInferenceAttack(InferenceAttack):
         attack_model: nn.Module,
     ) -> float:
         """
-        Evaluates the attack model.
+        Evaluates the performance of the attack model on the provided dataset.
 
-        Args:
-            attack_loader (DataLoader): The DataLoader for the attack model.
-            attack_labels (np.ndarray): The labels for the attack model.
+        This method calculates the accuracy of the attack model by comparing its predictions
+        against the true labels for the dataset.
 
-        Returns:
-            float: The accuracy of the attack model.
+        Parameters
+        ----------
+        attack_model : nn.Module
+            The neural network model that performs the membership inference attack and whose performance will be evaluated.
+
+        Returns
+        -------
+        float
+            The accuracy of the attack model, represented as a decimal between 0 and 1,
+            indicating the proportion of correct predictions.
         """
         attack_model = attack_model.to(self.device)
         attack_model.eval()

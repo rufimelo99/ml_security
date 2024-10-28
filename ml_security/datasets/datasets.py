@@ -113,21 +113,43 @@ def create_cv_dataloader(
     split_ratio: Optional[List[float]] = None,
 ) -> DataLoader:
     """
-    Create a DataLoader for the specified dataset.
+    Create a DataLoader for the specified dataset, suitable for cross-validation.
 
-    Args:
-        dataset (Dataset): The dataset to load.
-        transform (torchvision.transforms.Compose, optional): A list of transformations to apply to the data. Defaults to None.
-        download (bool, optional): Whether to download the dataset. Defaults to True.
-        root (str, optional): The directory to save the dataset. Defaults to './data'.
-        batch_size (int, optional): The batch size. Defaults to 64.
-        shuffle (bool, optional): Whether to shuffle the data. Defaults to True.
-        transformation (transforms.Compose, optional): The transformation to apply to the data. Defaults to DEFAULT_TRANSFORM.
-        max_samples (int, optional): The maximum number of samples to load. Defaults to 1000.
-        split_ratio (List[float], optional): The ratio to split the dataset into training and testing sets. Defaults to None.
+    This function sets up a DataLoader that can be used for training or testing a model
+    on a specified dataset. It supports downloading datasets, applying transformations,
+    and splitting datasets for cross-validation.
 
-    Returns:
-        torch.utils.data.DataLoader: A DataLoader for the specified dataset.
+    Parameters
+    ----------
+    dataset : DatasetType, optional
+        The dataset to load. Defaults to DatasetType.MNIST.
+    download : bool, optional
+        Whether to download the dataset if it is not found locally. Defaults to True.
+    root : str, optional
+        The directory where the dataset will be stored or loaded from. Defaults to './data'.
+    batch_size : int, optional
+        The number of samples to load per batch. Defaults to 64.
+    shuffle : bool, optional
+        Whether to shuffle the data after every epoch. Defaults to True.
+    train : bool, optional
+        If True, loads the training data; if False, loads the testing data. Defaults to True.
+    transformation : transforms.Compose, optional
+        The transformation to apply to the dataset. Defaults to DEFAULT_TRANSFORM.
+    max_samples : int, optional
+        The maximum number of samples to load from the dataset. If None, loads the entire dataset. Defaults to None.
+    split_ratio : List[float], optional
+        The ratio to split the dataset into training and testing sets. If None, no splitting is performed.
+        Defaults to None.
+
+    Returns
+    -------
+    DataLoader
+        A DataLoader object for the specified dataset, ready for use in model training or evaluation.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the dataset cannot be found and download is set to False.
     """
     if split_ratio:
         assert len(split_ratio) == 2, "Split ratio must be a list of 2 floats."
@@ -181,21 +203,33 @@ def create_tabular_dataloader(
     split_ratio: Optional[List[float]] = None,
 ) -> DataLoader:
     """
-    Create a DataLoader for the specified dataset.
+    Create a DataLoader for the specified tabular dataset.
 
-    Args:
-        dataset (Dataset): The dataset to load.
-        transform (torchvision.transforms.Compose, optional): A list of transformations to apply to the data. Defaults to None.
-        download (bool, optional): Whether to download the dataset. Defaults to True.
-        root (str, optional): The directory to save the dataset. Defaults to './data'.
-        batch_size (int, optional): The batch size. Defaults to 64.
-        shuffle (bool, optional): Whether to shuffle the data. Defaults to True.
-        transformation (transforms.Compose, optional): The transformation to apply to the data. Defaults to DEFAULT_TRANSFORM.
-        max_samples (int, optional): The maximum number of samples to load. Defaults to 1000.
-        split_ratio (List[float], optional): The ratio to split the dataset into training and testing sets. Defaults to None.
+    This function sets up a DataLoader specifically for tabular datasets, enabling
+    training and evaluation workflows. It allows for batch processing, shuffling, and
+    splitting the dataset into training and test subsets.
 
-    Returns:
-        torch.utils.data.DataLoader: A DataLoader for the specified dataset.
+    Parameters
+    ----------
+    dataset : DatasetType, optional
+        The dataset to load. Defaults to DatasetType.IRIS.
+    batch_size : int, optional
+        The number of samples to load per batch. Defaults to 64.
+    shuffle : bool, optional
+        Whether to shuffle the data after every epoch. Defaults to True.
+    train : bool, optional
+        If True, loads the training data; if False, loads the testing data. Defaults to True.
+    max_samples : int, optional
+        The maximum number of samples to load from the dataset. If None, loads the entire dataset. Defaults to None.
+    split_ratio : List[float], optional
+        The ratio to split the dataset into training and testing sets. If None, no splitting is performed.
+        The ratios must sum to 1. Defaults to None.
+
+    Returns
+    -------
+    DataLoader
+        A DataLoader object for the specified dataset, ready for use in model training or evaluation.
+
     """
     assert dataset in DatasetType, "Invalid dataset type."
 
@@ -242,20 +276,42 @@ def create_dataloader(
     """
     Create a DataLoader for the specified dataset.
 
-    Args:
-        dataset (Dataset): The dataset to load.
-        transform (torchvision.transforms.Compose, optional): A list of transformations to apply to the data. Defaults to None.
-        download (bool, optional): Whether to download the dataset. Defaults to True.
-        root (str, optional): The directory to save the dataset. Defaults to './data'.
-        batch_size (int, optional): The batch size. Defaults to 64.
-        shuffle (bool, optional): Whether to shuffle the data. Defaults to True.
-        transformation (transforms.Compose, optional): The transformation to apply to the data. Defaults to DEFAULT_TRANSFORM.
-        max_samples (int, optional): The maximum number of samples to load. Defaults to 1000.
-        split_ratio (List[float], optional): The ratio to split the dataset into training and testing sets. Defaults to None.
+    This function initializes a DataLoader that handles loading and preprocessing of the specified dataset.
+    It provides options for downloading, shuffling, and splitting the dataset for training and testing.
 
-    Returns:
-        torch.utils.data.DataLoader: A DataLoader for the specified dataset.
+    Parameters
+    ----------
+    dataset : DatasetType, optional
+        The dataset to load. Defaults to DatasetType.MNIST.
+    download : bool, optional
+        Whether to download the dataset if it is not already available. Defaults to True.
+    root : str, optional
+        The directory where the dataset will be saved. Defaults to './data'.
+    batch_size : int, optional
+        The number of samples to load per batch. Defaults to 64.
+    shuffle : bool, optional
+        Whether to shuffle the data at every epoch. Defaults to True.
+    train : bool, optional
+        If True, loads the training data; if False, loads the testing data. Defaults to True.
+    transformation : Optional[transforms.Compose], optional
+        A series of transformations to apply to the data. Defaults to DEFAULT_TRANSFORM.
+    max_samples : int, optional
+        The maximum number of samples to load from the dataset. If None, loads the entire dataset. Defaults to None.
+    split_ratio : List[float], optional
+        A list of ratios for splitting the dataset into training and testing sets.
+        If None, no splitting is performed. The ratios must sum to 1. Defaults to None.
+
+    Returns
+    -------
+    DataLoader
+        A DataLoader object configured for the specified dataset, ready for use in model training or evaluation.
+
+    Raises
+    ------
+    ValueError
+        If the split_ratio does not sum to 1 or if invalid ratios are provided.
     """
+
     assert dataset in DatasetType, "Invalid dataset type."
 
     dataset_info = DATASET_REGISTRY[dataset]

@@ -7,3 +7,7 @@ parts:
 - caption: Basic attacks and defenses
   chapters:
   - file: attacks
+- caption: Resourceful implementations
+  chapters:
+  - file: datasets
+  - file: utils
