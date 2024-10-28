@@ -90,7 +90,6 @@ def process_y(df):
 
 
 def construct_dataset(x, y):
-
     x = torch.tensor(x, dtype=torch.float32)
     y = torch.tensor(y, dtype=torch.int64)
     if len(y.shape) == 2:

@@ -15,5 +15,5 @@ repos:
     hooks:
       - id: pytest
         name: Run pytest
-        entry: sh -c 'cd ml_security && pytest'
+        entry: sh -c 'pytest'
         language: system
