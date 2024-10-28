@@ -8,15 +8,16 @@ assignees: rufimelo99
 ---
 
 ---
+
 name: Bug report
 about: Describe a bug you want fixed
 ---
 
-**Describe the bug**
+# Describe the bug
 
-**To Reproduce**
-[ ] - Step 1
+# To Reproduce
+- [ ] Step 1
 
-**Expected behaviour**
+# Expected behaviour
 
 If applicable, add versions and screenshots to help explain your problem.

@@ -4,8 +4,6 @@ from typing import List, Union
 import torch
 import torch.utils
 
-from ml_security.logger import logger
-
 
 class Attack(ABC):
     @abstractmethod
@@ -13,7 +11,7 @@ class Attack(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def attack(self, model: torch.nn.Module, dataloader: torch.utils.data.DataLoader):
+    def attack(self, **kwargs):
         raise NotImplementedError
 
     @classmethod
@@ -38,20 +36,8 @@ class AdversarialAttack(Attack):
         """
         raise NotImplementedError
 
-    def evaluate(self, model: torch.nn.Module, dataloader: torch.utils.data.DataLoader):
-        """
-        Evaluates the model with the adversarial examples.
-
-        Args:
-            model (torch.nn.Module): The model to evaluate.
-            dataloader (torch.utils.data.DataLoader): The dataloader of the dataset.
-
-        Returns:
-            float: The accuracy of the model.
-        """
-
+    @staticmethod
     def evaluate(
-        self,
         adv_examples: Union[List[torch.Tensor], torch.utils.data.DataLoader],
     ):
         """
@@ -70,7 +56,7 @@ class AdversarialAttack(Attack):
         assert len(adv_examples[0]) == 3, "adv_examples must be a list of tuples."
         correct = 0
         total = len(adv_examples)
-        for original_target, pred, adv_ex in adv_examples:
+        for original_target, pred, _ in adv_examples:
             if original_target == pred:
                 correct += 1
         return correct / total
