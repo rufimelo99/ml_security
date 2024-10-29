@@ -5,10 +5,14 @@
 ###############################################################################
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../..'))
+
+sys.path.insert(0, os.path.abspath("../.."))
+import ml_security
+
+# -- Project information -----------------------------------------------------
 author = "Rui Melo"
-project = 'ml_security'
-copyright = '2024, Rui Melo'
+project = "ml_security"
+copyright = "2024, Rui Melo"
 comments_config = {"hypothesis": False, "utterances": False}
 exclude_patterns = ["**.ipynb_checkpoints", ".DS_Store", "Thumbs.db", "_build"]
 extensions = [
