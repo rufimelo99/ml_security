@@ -3,9 +3,15 @@
 # If you wish to continue using _config.yml, make edits to that file and
 # re-generate this one.
 ###############################################################################
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath("../.."))
+
+# -- Project information -----------------------------------------------------
 author = "Rui Melo"
-project = 'ml_security'
-copyright = '2024, Rui Melo'
+project = "ml_security"
+copyright = "2024, Rui Melo"
 comments_config = {"hypothesis": False, "utterances": False}
 exclude_patterns = ["**.ipynb_checkpoints", ".DS_Store", "Thumbs.db", "_build"]
 extensions = [
@@ -74,6 +80,7 @@ nb_execution_in_temp = False
 nb_execution_mode = "auto"
 nb_execution_timeout = 30
 nb_output_stderr = "show"
+latex_engine = "pdflatex"
 numfig = True
 pygments_style = "sphinx"
 suppress_warnings = ["myst.domains"]

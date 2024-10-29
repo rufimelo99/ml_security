@@ -1,8 +1,4 @@
-from ml_security.utils import (
-    distance,
-    nlp_utils,
-    utils
-)
+from ml_security.utils import distance, nlp_utils, utils
 
 __all__ = [
     "distance",
