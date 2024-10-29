@@ -4,8 +4,9 @@
 # re-generate this one.
 ###############################################################################
 author = "Rui Melo"
+project = 'ml_security'
+copyright = '2024, Rui Melo'
 comments_config = {"hypothesis": False, "utterances": False}
-copyright = "2024"
 exclude_patterns = ["**.ipynb_checkpoints", ".DS_Store", "Thumbs.db", "_build"]
 extensions = [
     "sphinx.ext.autodoc",
