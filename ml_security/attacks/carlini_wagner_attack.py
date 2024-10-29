@@ -37,15 +37,17 @@ class CarliniWagnerAttack(AdversarialAttack):
     def __init__(
         self,
         device: torch.device,
+        kappa=0,
         distance_metric: DistanceMetricType = DistanceMetricType.L2,
         c: float = 1e-4,
-        lr: float = 0.01,
+        lr: float = 0.1,
         num_steps: int = 1000,
     ):
         super().__init__(alias="CarliniWagnerAttack")
         self.distance_metric = distance_metric
         self.c = c
         self.lr = lr
+        self.kappa= kappa
         self.num_steps = num_steps
         self.device = device
 
@@ -130,64 +132,47 @@ class CarliniWagnerAttack(AdversarialAttack):
         torch.Tensor
             A tensor containing the adversarial examples generated from the original images.
         """
+
+        # Set the model to evaluation mode and turn off gradient tracking
+        model.eval()
+        
         distance_metric = get_distance_metric(self.distance_metric)
 
         images = images.to(device)
         labels = labels.to(device)
         if target_labels is not None:
             target_labels = target_labels.to(device)
-        ori_images = images.clone().detach()
 
-        lower_bounds = torch.zeros_like(images).to(device)
-        upper_bounds = torch.ones_like(images).to(device)
 
-        # Initializes perturbation delta as a variable with gradient enabled.
-        delta = torch.zeros_like(images, requires_grad=True).to(device)
-
+        delta = torch.zeros_like(images, requires_grad=True).to(images.device)
         optimizer = torch.optim.Adam([delta], lr=self.lr)
 
-        for _ in range(self.num_steps):
-            # Generates thr adversarial image and clamp it to be within [0, 1].
-            adv_images = torch.clamp(ori_images + delta, 0, 1)
+        for i in range(self.num_steps):
+            # Add perturbation and clamp values to keep them in the valid range [0,1]
+            adv_images = (images + delta).clamp(0, 1)
+            outputs = model(adv_images)
+            outputs.to(device)
 
-            # Predicts the class of the adversarial image.
-            outputs: torch.Tensor = model(adv_images)
+            # Compute the CW loss
+            loss1 = distance_metric(delta.view(delta.size(0), -1))
 
-            # Carlini-Wagner loss formulation:
-            if not target_labels:
-                # Untargeted loss: discourage the true class
-                real = outputs.gather(1, labels.view(-1, 1)).squeeze()
-                other, _ = torch.max(
-                    (outputs - 1e4 * F.one_hot(labels, num_classes=outputs.size(1))),
-                    dim=1,
-                )
-                f_loss = torch.clamp(real - other, min=0)
-            else:
-                # Targeted loss: encourage the target class
-                real = outputs.gather(1, target_labels.view(-1, 1)).squeeze()
-                other, _ = torch.max(
-                    (
-                        outputs
-                        - 1e4 * F.one_hot(target_labels, num_classes=outputs.size(1))
-                    ),
-                    dim=1,
-                )
-                f_loss = torch.clamp(other - real, min=0)
+            one_hot_labels = torch.eye(len(outputs[0]), device=images.device)[labels]
+            real = (one_hot_labels * outputs).sum(dim=1)
+            other = ((1 - one_hot_labels) * outputs - one_hot_labels * 1e4).max(dim=1)[0]
+            loss2 = torch.clamp(real - other + self.kappa, min=0)  # Misclassification confidence
 
-            # Minimises perturbation size with L2 norm and add f_loss.
-            l2_loss = distance_metric(delta.view(delta.size(0), -1)).mean()
+            # Combine losses
+            loss = loss1 + self.c * loss2.mean()
 
-            loss = self.c * f_loss + l2_loss
-
-            # Backward pass and optimize
+            # Backpropagation
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
-            # Projects delta to be within bounds if necessary.
-            delta.data = torch.clamp(
-                delta, lower_bounds - ori_images, upper_bounds - ori_images
-            )
-        # Generates final adversarial examples, clamped to be within [0, 1].
-        adv_images = torch.clamp(ori_images + delta, 0, 1).detach()
+            # # Optional: print out progress every 100 iterations
+            # if i % 1 == 0:
+            #     print(f"Iteration {i}, Loss: {loss.item()}")
+
+        # Return the adversarial images
+        adv_images = (images + delta).clamp(0, 1).detach()
         return adv_images
