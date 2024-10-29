@@ -13,3 +13,12 @@ scikit-learn
 datasets
 pre-commit
 scipy
+# For documentation
+jupyter-book
+matplotlib
+numpy
+sphinx-inline-tabs
+sphinx-examples
+sphinx-proof
+sphinx-hoverxref
+ml_security
