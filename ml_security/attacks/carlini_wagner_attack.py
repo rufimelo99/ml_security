@@ -151,19 +151,28 @@ class CarliniWagnerAttack(AdversarialAttack):
             adv_images = torch.clamp(ori_images + delta, 0, 1)
 
             # Predicts the class of the adversarial image.
-            outputs = model(adv_images)
+            outputs: torch.Tensor = model(adv_images)
 
-            # Computes the loss
-            if target_labels:
-                # If target_labels is provided, the attack is targeted.
-                # It maximizes the logit for the target label.
-                targeted_loss = F.cross_entropy(outputs, target_labels)
-                f_loss = -targeted_loss
+            # Carlini-Wagner loss formulation:
+            if not target_labels:
+                # Untargeted loss: discourage the true class
+                real = outputs.gather(1, labels.view(-1, 1)).squeeze()
+                other, _ = torch.max(
+                    (outputs - 1e4 * F.one_hot(labels, num_classes=outputs.size(1))),
+                    dim=1,
+                )
+                f_loss = torch.clamp(real - other, min=0)
             else:
-                # If target_labels is not provided, the attack is untargeted.
-                # It minimizes the logit for the true label.
-                true_loss = F.cross_entropy(outputs, labels)
-                f_loss = true_loss
+                # Targeted loss: encourage the target class
+                real = outputs.gather(1, target_labels.view(-1, 1)).squeeze()
+                other, _ = torch.max(
+                    (
+                        outputs
+                        - 1e4 * F.one_hot(target_labels, num_classes=outputs.size(1))
+                    ),
+                    dim=1,
+                )
+                f_loss = torch.clamp(other - real, min=0)
 
             # Minimises perturbation size with L2 norm and add f_loss.
             l2_loss = distance_metric(delta.view(delta.size(0), -1)).mean()
