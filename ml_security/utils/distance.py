@@ -4,7 +4,7 @@ from typing import Optional
 
 import torch
 
-from ml_security.utils.logger import logger
+from ml_security.logger import logger
 
 
 class DistanceMetricType(Enum):

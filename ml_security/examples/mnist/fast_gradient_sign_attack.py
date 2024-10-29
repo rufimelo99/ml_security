@@ -7,7 +7,7 @@ from ml_security.attacks.fast_gradient_sign_attack import (
 )
 from ml_security.datasets.datasets import DatasetType, create_dataloader
 from ml_security.examples.mnist.model import Net
-from ml_security.utils.logger import logger
+from ml_security.logger import logger
 from ml_security.utils.utils import get_device, set_seed
 
 # Sets random seed for reproducibility.

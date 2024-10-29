@@ -10,7 +10,7 @@ from tqdm import tqdm
 from transformers import AutoModel, AutoTokenizer
 
 from ml_security.attacks.membership_inference_attack import create_attack_dataloader
-from ml_security.utils.logger import logger
+from ml_security.logger import logger
 from ml_security.utils.utils import get_device
 
 DEVICE = get_device(allow_mps=True)

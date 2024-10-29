@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
 from ml_security.datasets.tabular_UCI import from_uciml_to_dataset
-from ml_security.utils.logger import logger
+from ml_security.logger import logger
 
 
 class DatasetOrigin(str, Enum):

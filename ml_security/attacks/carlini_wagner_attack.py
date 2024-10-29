@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 from ml_security.attacks.base import AdversarialAttack
-from ml_security.utils.logger import logger
+from ml_security.logger import logger
 from ml_security.utils.distance import DistanceMetricType, get_distance_metric
 
 
