@@ -74,6 +74,7 @@ nb_execution_in_temp = False
 nb_execution_mode = "auto"
 nb_execution_timeout = 30
 nb_output_stderr = "show"
+latex_engine = "pdflatex"
 numfig = True
 pygments_style = "sphinx"
 suppress_warnings = ["myst.domains"]
