@@ -145,7 +145,7 @@ class CarliniWagnerAttack(AdversarialAttack):
 
 
         delta = torch.zeros_like(images, requires_grad=True).to(images.device)
-        optimizer = torch.optim.Adam([delta], lr=self.lr)
+        optimizer = torch.optim.Adam([delta], lr=self.lr, weight_decay=0.5)
 
         for i in range(self.num_steps):
             # Add perturbation and clamp values to keep them in the valid range [0,1]
