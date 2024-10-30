@@ -44,16 +44,16 @@ class DistanceMetric(ABC):
     """
 
     @staticmethod
-    def distance(x: torch.Tensor, y: torch.Tensor, dim:Optional[int]) -> torch.Tensor:
+    def distance(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         pass
 
     @classmethod
     def __call__(
-        cls, x: torch.Tensor, y: Optional[torch.Tensor] = None, dim:Optional[int] = None
+        cls, x: torch.Tensor, y: Optional[torch.Tensor] = None
     ) -> torch.Tensor:
         if y is None:
             y = torch.zeros_like(x)
-        return cls.distance(x, y, dim)
+        return cls.distance(x, y)
 
 
 class L1Distance(DistanceMetric):
@@ -70,8 +70,8 @@ class L1Distance(DistanceMetric):
     """
 
     @staticmethod
-    def distance(x: torch.Tensor, y: torch.Tensor, dim:Optional[int]) -> torch.Tensor:
-        return torch.sum(torch.abs(x - y), dim=dim)
+    def distance(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        return torch.sum(torch.abs(x - y))
 
 
 class L2Distance(DistanceMetric):
@@ -87,8 +87,8 @@ class L2Distance(DistanceMetric):
         Computes the L2 distance between two tensors.
     """
     @staticmethod
-    def distance(x: torch.Tensor, y: torch.Tensor, dim:Optional[int]) -> torch.Tensor:
-        return torch.norm(x - y, p=2, dim=dim)
+    def distance(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        return torch.norm(x - y, p=2)
 
 
 class LinfDistance(DistanceMetric):
@@ -105,8 +105,8 @@ class LinfDistance(DistanceMetric):
     """
 
     @staticmethod
-    def distance(x: torch.Tensor, y: torch.Tensor, dim:Optional[int]) -> torch.Tensor:
-        return torch.max(torch.abs(x - y), dim=dim).values
+    def distance(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        return torch.max(torch.abs(x - y))
 
 
 def get_distance_metric(distance_metric: DistanceMetricType) -> DistanceMetric:

@@ -159,7 +159,7 @@ class CarliniWagnerAttack(AdversarialAttack):
             one_hot_labels = torch.eye(len(outputs[0]), device=images.device)[labels]
             real = (one_hot_labels * outputs).sum(dim=1)
             other = ((1 - one_hot_labels) * outputs - one_hot_labels * 1e4).max(dim=1)[0]
-            loss2 = torch.clamp(real - other + self.kappa, min=0)  # Misclassification confidence
+            loss2 = real - other + self.kappa
 
             # Combine losses
             loss = loss1 + self.c * loss2.mean()
@@ -172,7 +172,8 @@ class CarliniWagnerAttack(AdversarialAttack):
             # # Optional: print out progress every 100 iterations
             # if i % 1 == 0:
             #     print(f"Iteration {i}, Loss: {loss.item()}")
-
+            #logger.info("Iteration", iteration=i, loss=loss.item(), distance=loss1.item(), loss2=loss2.mean().item())
+        
         # Return the adversarial images
         adv_images = (images + delta).clamp(0, 1).detach()
         return adv_images
