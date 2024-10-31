@@ -8,6 +8,8 @@ from ml_security.attacks.base import AdversarialAttack
 from ml_security.logger import logger
 from ml_security.utils.distance import DistanceMetricType, get_distance_metric
 
+C_UPPER = 1e10
+
 
 class CarliniWagnerAttack(AdversarialAttack):
     """
@@ -25,8 +27,10 @@ class CarliniWagnerAttack(AdversarialAttack):
             The weight for the loss term.
         lr: float
             The learning rate for the attack.
-        num_steps: int
+        num_iterations: int
             The number of optimization steps to perform.
+        binary_search_steps: int
+            Number of times to adjust constant with binary search (positive value).
 
     References
     -----------
@@ -40,13 +44,15 @@ class CarliniWagnerAttack(AdversarialAttack):
         distance_metric: DistanceMetricType = DistanceMetricType.L2,
         c: float = 1e-4,
         lr: float = 0.01,
-        num_steps: int = 1000,
+        num_iterations: int = 1000,
+        binary_search_steps: int = 9,
     ):
         super().__init__(alias="CarliniWagnerAttack")
         self.distance_metric = distance_metric
         self.c = c
         self.lr = lr
-        self.num_steps = num_steps
+        self.num_iterations = num_iterations
+        self.binary_search_steps = binary_search_steps
         self.device = device
 
     def attack(self, model: torch.nn.Module, dataloader: torch.utils.data.DataLoader):
@@ -146,14 +152,89 @@ class CarliniWagnerAttack(AdversarialAttack):
 
         optimizer = torch.optim.Adam([delta], lr=self.lr)
 
-        for _ in range(self.num_steps):
-            # Generates thr adversarial image and clamp it to be within [0, 1].
+        lower_bound_c = torch.zeros(images.size(0)).to(device)
+        upper_bound_c = torch.ones(images.size(0)).to(device) * C_UPPER
+        current_c = torch.ones(images.size(0)).to(device) * self.c
+
+        if self.binary_search_steps > 0:
+            for s in range(self.binary_search_steps):
+                # Clamps the perturbation to be within the bounds.
+                delta.data = torch.clamp(
+                    delta, lower_bounds - ori_images, upper_bounds - ori_images
+                )
+
+                # Optimizes the perturbation.
+                delta = self._optimize_perturbation(
+                    model,
+                    ori_images,
+                    delta,
+                    labels,
+                    current_c,
+                    optimizer,
+                    distance_metric,
+                    target_labels,
+                )
+
+                # Check if the attack is successful
+                success = self._check_attack_success(
+                    model, ori_images + delta, labels, target_labels
+                )
+
+                # Update the binary search bounds and current_c
+                lower_bound_c = torch.where(success, lower_bound_c, current_c)
+                upper_bound_c = torch.where(success, current_c, upper_bound_c)
+                current_c = (lower_bound_c + upper_bound_c) / 2
+
+        # Generates final adversarial examples, clamped to be within [0, 1].
+        adv_images = torch.clamp(ori_images + delta, 0, 1).detach()
+        return adv_images
+
+    def _optimize_perturbation(
+        self,
+        model: torch.nn.Module,
+        ori_images: torch.Tensor,
+        delta: torch.Tensor,
+        labels: torch.Tensor,
+        current_c: torch.Tensor,
+        optimizer: torch.optim.Optimizer,
+        distance_metric: DistanceMetricType,
+        target_labels: Optional[torch.Tensor] = None,
+    ):
+        """
+        Optimizes the perturbation delta to minimize the loss function.
+
+        Parameters
+        ----------
+        model : torch.nn.Module
+            The neural network model to attack.
+        ori_images : torch.Tensor
+            The original images used as the input for the attack.
+        delta : torch.Tensor
+            The perturbation to optimize.
+        labels : torch.Tensor
+            True class labels for the input images, used in untargeted attacks.
+        current_c : torch.Tensor
+            The weight for the loss term.
+        optimizer : torch.optim.Optimizer
+            The optimizer used to update the perturbation.
+        distance_metric : DistanceMetricType
+            The distance metric guiding the attack's perturbation minimization.
+        target_labels : Optional[torch.Tensor], optional
+            Target class labels for a targeted attack. If None, the attack is untargeted.
+
+        Returns
+        -------
+        torch.Tensor
+            The optimized perturbation delta.
+        """
+        for _ in range(self.num_iterations):
+            # Generates the adversarial image and clamps it to be within [0, 1].
             adv_images = torch.clamp(ori_images + delta, 0, 1)
 
             # Predicts the class of the adversarial image.
             outputs = model(adv_images)
 
-            # Computes the loss
+            # Computes the loss.
             if target_labels:
                 # If target_labels is provided, the attack is targeted.
                 # It maximizes the logit for the target label.
@@ -165,20 +246,48 @@ class CarliniWagnerAttack(AdversarialAttack):
                 true_loss = F.cross_entropy(outputs, labels)
                 f_loss = true_loss
 
-            # Minimises perturbation size with L2 norm and add f_loss.
+            # Minimizes perturbation size with L2 norm and adds f_loss.
             l2_loss = distance_metric(delta.view(delta.size(0), -1)).mean()
 
             loss = self.c * f_loss + l2_loss
 
-            # Backward pass and optimize
+            # Backward pass and optimize.
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
             # Projects delta to be within bounds if necessary.
             delta.data = torch.clamp(
-                delta, lower_bounds - ori_images, upper_bounds - ori_images
+                delta, -current_c.view(-1, 1, 1, 1), current_c.view(-1, 1, 1, 1)
             )
-        # Generates final adversarial examples, clamped to be within [0, 1].
-        adv_images = torch.clamp(ori_images + delta, 0, 1).detach()
-        return adv_images
+
+        return delta
+
+    def _check_attack_success(
+        self, model, perturbed_images, original_labels, target_labels=None
+    ):
+        """
+        Check if the attack is successful.
+
+        Args:
+            model (torch.nn.Module): The model to attack.
+            perturbed_images (torch.Tensor): The perturbed images.
+            original_labels (torch.Tensor): The original labels of the images.
+            target_labels (torch.Tensor, optional): The target labels for a targeted attack.
+
+        Returns:
+            torch.Tensor: A boolean tensor indicating the success of the attack for each image.
+        """
+        model.eval()
+        with torch.no_grad():
+            outputs = model(perturbed_images)
+            _, predicted = torch.max(outputs, 1)
+
+        if target_labels is not None:
+            # Targeted attack: check if the predictions match the target labels
+            success = predicted.eq(target_labels)
+        else:
+            # Untargeted attack: check if the predictions do not match the original labels
+            success = ~predicted.eq(original_labels)
+
+        return success
