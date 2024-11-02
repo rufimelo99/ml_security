@@ -54,6 +54,16 @@ class CarliniWagnerAttack(AdversarialAttack):
         self.num_iterations = num_iterations
         self.binary_search_steps = binary_search_steps
         self.device = device
+        logger.info(
+            "Initialized Carlini-Wagner Attack",
+            c=c,
+            lr=lr,
+            num_iterations=num_iterations,
+            binary_search_steps=binary_search_steps,
+        )
+
+        if self.binary_search_steps <= 0:
+            self.binary_search_steps = 1
 
     def attack(self, model: torch.nn.Module, dataloader: torch.utils.data.DataLoader):
         """
@@ -156,34 +166,34 @@ class CarliniWagnerAttack(AdversarialAttack):
         upper_bound_c = torch.ones(images.size(0)).to(device) * C_UPPER
         current_c = torch.ones(images.size(0)).to(device) * self.c
 
-        if self.binary_search_steps > 0:
-            for s in range(self.binary_search_steps):
-                # Clamps the perturbation to be within the bounds.
-                delta.data = torch.clamp(
-                    delta, lower_bounds - ori_images, upper_bounds - ori_images
-                )
+        for s in range(self.binary_search_steps):
 
-                # Optimizes the perturbation.
-                delta = self._optimize_perturbation(
-                    model,
-                    ori_images,
-                    delta,
-                    labels,
-                    current_c,
-                    optimizer,
-                    distance_metric,
-                    target_labels,
-                )
+            # Clamps the perturbation to be within the bounds.
+            delta.data = torch.clamp(
+                delta, lower_bounds - ori_images, upper_bounds - ori_images
+            )
 
-                # Check if the attack is successful
-                success = self._check_attack_success(
-                    model, ori_images + delta, labels, target_labels
-                )
+            # Optimizes the perturbation.
+            delta = self._optimize_perturbation(
+                model,
+                ori_images,
+                delta,
+                labels,
+                current_c,
+                optimizer,
+                distance_metric,
+                target_labels,
+            )
 
-                # Update the binary search bounds and current_c
-                lower_bound_c = torch.where(success, lower_bound_c, current_c)
-                upper_bound_c = torch.where(success, current_c, upper_bound_c)
-                current_c = (lower_bound_c + upper_bound_c) / 2
+            # Check if the attack is successful
+            success = self._check_attack_success(
+                model, ori_images + delta, labels, target_labels
+            )
+
+            # Update the binary search bounds and current_c
+            lower_bound_c = torch.where(success, lower_bound_c, current_c)
+            upper_bound_c = torch.where(success, current_c, upper_bound_c)
+            current_c = (lower_bound_c + upper_bound_c) / 2
 
         # Generates final adversarial examples, clamped to be within [0, 1].
         adv_images = torch.clamp(ori_images + delta, 0, 1).detach()
@@ -227,6 +237,7 @@ class CarliniWagnerAttack(AdversarialAttack):
         torch.Tensor
             The optimized perturbation delta.
         """
+        model.eval()
         for _ in range(self.num_iterations):
             # Generates the adversarial image and clamps it to be within [0, 1].
             adv_images = torch.clamp(ori_images + delta, 0, 1)
@@ -239,18 +250,16 @@ class CarliniWagnerAttack(AdversarialAttack):
                 # If target_labels is provided, the attack is targeted.
                 # It maximizes the logit for the target label.
                 targeted_loss = F.cross_entropy(outputs, target_labels)
-                f_loss = -targeted_loss
+                f_loss = targeted_loss
             else:
                 # If target_labels is not provided, the attack is untargeted.
                 # It minimizes the logit for the true label.
                 true_loss = F.cross_entropy(outputs, labels)
-                f_loss = true_loss
+                f_loss = -true_loss
 
             # Minimizes perturbation size with L2 norm and adds f_loss.
             l2_loss = distance_metric(delta.view(delta.size(0), -1)).mean()
-
             loss = self.c * f_loss + l2_loss
-
             # Backward pass and optimize.
             optimizer.zero_grad()
             loss.backward()
